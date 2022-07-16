@@ -31,7 +31,6 @@ namespace tinyswift {
 
 #define KEYWORD(X) kw_ ## X,
 #define PUNCTUATOR(X, Y) X,
-#define POUND_KEYWORD(X) pound_ ## X,
 #include "TokenKinds.def"
 
             NUM_TOKENS
