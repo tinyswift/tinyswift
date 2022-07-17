@@ -135,7 +135,7 @@ PUNCTUATOR(backtick,      "`")
 PUNCTUATOR(exclaim_postfix, "!") // if left-bound
 
 PUNCTUATOR(question_postfix, "?") // if left-bound
-PUNCTUATOR(question_infix,"?")    // if not left-bound
+PUNCTUATOR(question_infix, "?")    // if not left-bound
 
 PUNCTUATOR(sil_dollar,    "$")    // Only in SIL mode.
 PUNCTUATOR(sil_exclamation, "!")    // Only in SIL mode.

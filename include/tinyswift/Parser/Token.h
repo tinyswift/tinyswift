@@ -16,6 +16,7 @@ namespace tinyswift {
         enum Kind {
             unknown = 0,
             eof,
+            error,
             code_complete,
             identifier,
             oper_binary_unspaced,   // "x+y"
@@ -31,12 +32,44 @@ namespace tinyswift {
 
 #define KEYWORD(X) kw_ ## X,
 #define PUNCTUATOR(X, Y) X,
+
 #include "TokenKinds.def"
 
             NUM_TOKENS
         };
 
         Token(Kind kind, llvm::StringRef spelling) : kind(kind), spelling(spelling) {}
+
+        // Token classification.
+        Kind getKind() const { return kind; }
+
+        bool is(Kind k) const { return kind == k; }
+
+        bool isAny(Kind k1, Kind k2) const { return is(k1) || is(k2); }
+
+        /// Return true if this token is one of the specified kinds.
+        template<typename... T>
+        bool isAny(Kind k1, Kind k2, Kind k3, T... others) const {
+            if (is(k1))
+                return true;
+            return isAny(k2, k3, others...);
+        }
+
+        bool isNot(Kind k) const { return kind != k; }
+
+        /// Return true if this token isn't one of the specified kinds.
+        template<typename... T>
+        bool isNot(Kind k1, Kind k2, T... others) const {
+            return !isAny(k1, k2, others...);
+        }
+
+        // Location processing.
+        llvm::SMLoc getLoc() const;
+
+        llvm::SMLoc getEndLoc() const;
+
+        llvm::SMRange getLocRange() const;
+
     private:
         /// Discriminator that indicates the sort of token this is.
         Kind kind;
