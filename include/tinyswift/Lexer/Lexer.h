@@ -16,7 +16,7 @@ namespace tinyswift {
 
         /// Constructor for Lexer
         explicit Lexer(const llvm::SourceMgr &sourceMgr);
-        
+
         const llvm::SourceMgr &getSourceMgr() { return sourceMgr; }
 
         /// Lex the next token
@@ -63,6 +63,8 @@ namespace tinyswift {
         void operator=(const Lexer &) = delete;
 
         Token lexNumber(const char *tokStart);
+
+        Token lexString(const char *tokStart);
     };
 
 }

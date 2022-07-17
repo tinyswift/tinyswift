@@ -2,7 +2,8 @@
 // Created by Satish on 16/07/22.
 //
 
-#include "tinyswift/Parser/Lexer.h"
+#include <llvm/ADT/StringExtras.h>
+#include "tinyswift/Lexer/Lexer.h"
 
 using namespace tinyswift;
 
@@ -74,6 +75,8 @@ Token Lexer::lexToken() {
             case ':':
                 return formToken(Token::colon, tokStart);
 
+            case '"':
+                return lexString(tokStart);
 
             case '0':
             case '1':
@@ -160,4 +163,36 @@ Token Lexer::lexNumber(const char *tokStart) {
         }
     }
     return formToken(Token::floating_literal, tokStart);
+}
+
+/// Lex a string literal.
+///
+///   string-literal ::= '"' [^"\n\f\v\r]* '"'
+///
+/// TODO: define escaping rules.
+Token Lexer::lexString(const char *tokStart) {
+    assert(curPtr[-1] == '"');
+
+    while (true) {
+        // Check to see if there is a code completion location within the string. In
+        // these cases we generate a completion location and place the currently
+        // lexed string within the token. This allows for the parser to use the
+        // partially lexed string when computing the completion results.
+        if (curPtr == codeCompleteLoc)
+            return formToken(Token::code_complete, tokStart);
+
+        switch (*curPtr++) {
+            case '"':
+                return formToken(Token::string_literal, tokStart);
+            case 0:
+                // If this is a random nul character in the middle of a string, just
+                // include it.  If it is the end of file, then it is an error.
+                if (curPtr - 1 != curBuffer.end())
+                    continue;
+                LLVM_FALLTHROUGH;
+
+            default:
+                continue;
+        }
+    }
 }

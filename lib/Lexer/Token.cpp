@@ -2,7 +2,7 @@
 // Created by Satish on 16/07/22.
 //
 
-#include "tinyswift/Parser/Token.h"
+#include "tinyswift/Lexer//Token.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace tinyswift;
@@ -35,10 +35,13 @@ llvm::StringRef Token::getTokenSpelling() {
         case Kind::floating_literal:
             return "floating_literal";
 
+        case Kind::string_literal:
+            return "string_literal";
+
 #define KEYWORD(X) case kw_ ## X: return #X;
 #define PUNCTUATOR(X, Y) case X: return Y;
 
-#include "tinyswift/Parser/TokenKinds.def"
+#include "tinyswift/Lexer/TokenKinds.def"
 
         default :
             llvm_unreachable("unexpected token kind");
