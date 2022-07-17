@@ -190,6 +190,14 @@ Token Lexer::lexString(const char *tokStart) {
                 if (curPtr - 1 != curBuffer.end())
                     continue;
                 LLVM_FALLTHROUGH;
+                
+            case '\\':
+                // Handle explicitly a few escapes.
+                if (*curPtr == '"' || *curPtr == '\\' || *curPtr == 'n' || *curPtr == 't')
+                    ++curPtr;
+                else
+                    return emitError(curPtr - 1, "unknown escape in string literal");
+                continue;
 
             default:
                 continue;
