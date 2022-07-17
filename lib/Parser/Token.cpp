@@ -30,12 +30,17 @@ llvm::StringRef Token::getTokenSpelling() {
             return "eof";
         case Kind::error:
             return "error";
+        case Kind::integer_literal:
+            return "integer_literal";
+        case Kind::floating_literal:
+            return "floating_literal";
 
 #define KEYWORD(X) case kw_ ## X: return #X;
 #define PUNCTUATOR(X, Y) case X: return Y;
 
 #include "tinyswift/Parser/TokenKinds.def"
 
-        default : llvm_unreachable("unexpected token kind");
+        default :
+            llvm_unreachable("unexpected token kind");
     }
 }

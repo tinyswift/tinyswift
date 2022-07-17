@@ -33,6 +33,12 @@ Token Lexer::lexToken() {
             default:
                 // Unknown character, emit an error.
                 return emitError(tokStart, "unexpected character");
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+                // Handle whitespace.
+                continue;
             case 0:
                 // This may either be a nul character in the source file or may be the EOF
                 // marker that llvm::MemoryBuffer guarantees will be there.
@@ -67,6 +73,19 @@ Token Lexer::lexToken() {
                 return formToken(Token::semi, tokStart);
             case ':':
                 return formToken(Token::colon, tokStart);
+
+
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                return lexNumber(tokStart);
         }
     }
 }
@@ -95,4 +114,50 @@ void Lexer::skipComment() {
                 break;
         }
     }
+}
+
+/// Lex a number literal.
+///
+///   integer-literal ::= digit+ | `0x` hex_digit+
+///   float-literal ::= [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
+///
+Token Lexer::lexNumber(const char *tokStart) {
+    assert(isdigit(curPtr[-1]));
+
+    // Handle the hexadecimal case.
+    if (curPtr[-1] == '0' && *curPtr == 'x') {
+        // If we see stuff like 0xi32, this is a literal `0` followed by an
+        // identifier `xi32`, stop after `0`.
+        if (!isxdigit(curPtr[1]))
+            return formToken(Token::integer_literal, tokStart);
+
+        curPtr += 2;
+        while (isxdigit(*curPtr))
+            ++curPtr;
+
+        return formToken(Token::integer_literal, tokStart);
+    }
+
+    // Handle the normal decimal case.
+    while (isdigit(*curPtr))
+        ++curPtr;
+
+    if (*curPtr != '.')
+        return formToken(Token::integer_literal, tokStart);
+    ++curPtr;
+
+    // Skip over [0-9]*([eE][-+]?[0-9]+)?
+    while (isdigit(*curPtr))
+        ++curPtr;
+
+    if (*curPtr == 'e' || *curPtr == 'E') {
+        if (isdigit(static_cast<unsigned char>(curPtr[1])) ||
+            ((curPtr[1] == '-' || curPtr[1] == '+') &&
+             isdigit(static_cast<unsigned char>(curPtr[2])))) {
+            curPtr += 2;
+            while (isdigit(*curPtr))
+                ++curPtr;
+        }
+    }
+    return formToken(Token::floating_literal, tokStart);
 }

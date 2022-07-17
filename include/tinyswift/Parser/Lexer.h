@@ -62,6 +62,7 @@ namespace tinyswift {
 
         void operator=(const Lexer &) = delete;
 
+        Token lexNumber(const char *tokStart);
     };
 
 }

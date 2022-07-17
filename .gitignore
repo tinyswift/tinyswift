@@ -52,3 +52,6 @@ _deps
 
 .idea
 cmake-build-debug
+.vscode
+build
+cmake-build-debug-coverage
