@@ -1,6 +1,6 @@
 #include <iostream>
 #include <llvm/Support/raw_ostream.h>
-#include "tinyswift/Parser/Lexer.h"
+#include "tinyswift/Lexer/Lexer.h"
 
 #include "llvm/ADT/StringRef.h"
 
