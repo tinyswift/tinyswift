@@ -47,6 +47,12 @@ Token Lexer::lexToken() {
             case '\r':
                 // Handle whitespace.
                 continue;
+
+            case -1:
+            case -2:
+                llvm::errs() << "UTF-16 BOM marker found\n";
+                curPtr = getBufferEnd();
+                return formToken(Token::eof, tokStart);
             case 0:
                 // This may either be a nul character in the source file or may be the EOF
                 // marker that llvm::MemoryBuffer guarantees will be there.
