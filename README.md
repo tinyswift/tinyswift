@@ -34,6 +34,17 @@
   let oneMillion = 1_000_000
   let justOverOneMillion = 1_000_000.000_000_1
   ```
+
+  - [x] Strings
+
+  Available
+  ```swift
+  let string = "This is a string."
+  let singleLineString = "These are the same."
+  ```
+  - [ ] Not Implemented
+    - [x] #], #! for shebangs, and the family of #identifiers
+
 - [ ] Parser
 - [ ] AST
 - [ ] IRGen

@@ -18,4 +18,4 @@ llvm_map_components_to_libnames(llvm_libs support)
 add_subdirectory(lib)
 
 add_executable(tinyswift main.cpp)
-target_link_libraries(tinyswift tinyswiftParser)
+target_link_libraries(tinyswift tinyswiftLexer)
