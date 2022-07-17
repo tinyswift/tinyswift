@@ -70,7 +70,17 @@ namespace tinyswift {
 
         llvm::SMRange getLocRange() const;
 
-    private:
+        /// Given a punctuation or keyword token kind, return the spelling of the
+        /// token as a string.  Warning: This will abort on markers, identifiers and
+        /// literal tokens since they have no fixed spelling.
+//        static llvm::StringRef getTokenSpelling(Kind kind);
+
+        /// Return the spelling of this token.
+        llvm::StringRef getSpelling() const { return spelling; };
+
+        llvm::StringRef getTokenSpelling();
+
+    private :
         /// Discriminator that indicates the sort of token this is.
         Kind kind;
 

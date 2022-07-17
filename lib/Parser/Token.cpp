@@ -18,3 +18,24 @@ llvm::SMLoc Token::getEndLoc() const {
 llvm::SMRange Token::getLocRange() const {
     return llvm::SMRange(getLoc(), getEndLoc());
 }
+
+/// Given a punctuation or keyword token kind, return the spelling of the
+/// token as a string.  Warning: This will abort on markers, identifiers and
+/// literal tokens since they have no fixed spelling.
+llvm::StringRef Token::getTokenSpelling() {
+    switch (kind) {
+        case Kind::unknown:
+            return "unknown";
+        case Kind::eof:
+            return "eof";
+        case Kind::error:
+            return "error";
+
+#define KEYWORD(X) case kw_ ## X: return #X;
+#define PUNCTUATOR(X, Y) case X: return Y;
+
+#include "tinyswift/Parser/TokenKinds.def"
+
+        default : llvm_unreachable("unexpected token kind");
+    }
+}

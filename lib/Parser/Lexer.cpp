@@ -24,6 +24,10 @@ Token Lexer::lexToken() {
     while (true) {
         const char *tokStart = curPtr;
 
+        // Check to see if the current token is at the code completion location.
+        if (tokStart == codeCompleteLoc)
+            return formToken(Token::code_complete, tokStart);
+
         // Lex the next token.
         switch (*curPtr++) {
             default:
@@ -35,6 +39,60 @@ Token Lexer::lexToken() {
                 if (curPtr - 1 == curBuffer.end())
                     return formToken(Token::eof, tokStart);
                 continue;
+
+            case '/':
+                if (*curPtr == '/') {
+                    skipComment();
+                    continue;
+                }
+                return emitError(tokStart, "unexpected character");
+
+            case '@':
+                return formToken(Token::at_sign, tokStart);
+            case '{':
+                return formToken(Token::l_brace, tokStart);
+            case '[':
+                return formToken(Token::l_square, tokStart);
+            case '(':
+                return formToken(Token::l_paren, tokStart);
+            case '}':
+                return formToken(Token::r_brace, tokStart);
+            case ']':
+                return formToken(Token::r_square, tokStart);
+            case ')':
+                return formToken(Token::r_paren, tokStart);
+            case ',':
+                return formToken(Token::comma, tokStart);
+            case ';':
+                return formToken(Token::semi, tokStart);
+            case ':':
+                return formToken(Token::colon, tokStart);
+        }
+    }
+}
+
+/// Skip a comment line, starting with a '//'.
+void Lexer::skipComment() {
+    // Advance over the second '/' in a '//' comment.
+    assert(*curPtr == '/');
+    ++curPtr;
+
+    while (true) {
+        switch (*curPtr++) {
+            case '\n':
+            case '\r':
+                // Newline is end of comment.
+                return;
+            case 0:
+                // If this is the end of the buffer, end the comment.
+                if (curPtr - 1 == curBuffer.end()) {
+                    --curPtr;
+                    return;
+                }
+                LLVM_FALLTHROUGH;
+            default:
+                // Skip over other characters.
+                break;
         }
     }
 }
