@@ -263,13 +263,11 @@ unsigned Lexer::lexCharacter(const char *&CurPtr, char StopQuote) {
         default: {// Normal characters are part of the string.
             // If this is a "high" UTF-8 character, validate it.
             if ((signed char) (CurPtr[-1]) >= 0) {
-//                llvm_unreachable("lex_unprintable_ascii_character");
                 return CurPtr[-1];
             }
             --CurPtr;
             unsigned CharValue = validateUTF8CharacterAndAdvance(CurPtr, getBufferEnd());
             if (CharValue != ~0U) return CharValue;
-//            llvm_unreachable("Invalid UTF8 character\n");
             return ~1U;
         }
         case '"':
@@ -292,7 +290,6 @@ unsigned Lexer::lexCharacter(const char *&CurPtr, char StopQuote) {
             LLVM_FALLTHROUGH;
         case '\n':  // String literals cannot have \n or \r in them.
         case '\r':
-//            llvm_unreachable("unterminated string literal");
             return ~1U;
         case '\\':  // Escapes.
             break;
