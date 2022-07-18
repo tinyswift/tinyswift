@@ -69,6 +69,10 @@ namespace tinyswift {
         unsigned int lexCharacter(const char *&CurPtr, char StopQuote);
 
         unsigned int lexUnicodeEscape(const char *&CurPtr);
+
+        Token lexOperatorIdentifier(const char *tokStart);
+
+        Token lexIdentifier(const char *tokStart);
     };
 
 }

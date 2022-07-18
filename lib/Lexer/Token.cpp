@@ -38,6 +38,9 @@ llvm::StringRef Token::getTokenSpelling() {
         case Kind::string_literal:
             return "string_literal";
 
+        case Kind::identifier:
+            return "identifier";
+
 #define KEYWORD(X) case kw_ ## X: return #X;
 #define PUNCTUATOR(X, Y) case X: return Y;
 
