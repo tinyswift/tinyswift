@@ -2,7 +2,7 @@
 // Created by Satish on 16/07/22.
 //
 
-#include "tinyswift/Lexer//Token.h"
+#include "tinyswift/Lexer/Token.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace tinyswift;
@@ -47,6 +47,6 @@ llvm::StringRef Token::getTokenSpelling() {
 #include "tinyswift/Lexer/TokenKinds.def"
 
         default :
-            llvm_unreachable("unexpected token kind");
+            return "unknown";
     }
 }

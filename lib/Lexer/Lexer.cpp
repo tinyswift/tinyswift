@@ -5,7 +5,6 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Support/raw_ostream.h>
 #include "tinyswift/Lexer/Lexer.h"
-#include "tinyswift/Lexer/StringHelper.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Regex.h"
 
@@ -177,454 +176,50 @@ Token Lexer::lexNumber(const char *tokStart) {
 ///
 ///   string_literal ::= ["]([^"\\\n\r]|character_escape)*["]
 ///
-Token Lexer::lexString(const char *tokStart) {
-    assert(curPtr[-1] == '"' || curPtr[-1] == '\'');
-
-    bool wasErroneous = false;
-    while (true) {
-        if (*curPtr == '\\' && *(curPtr + 1) == '(') {
-            // Consume tokens until we hit the corresponding ')'.
-            curPtr += 2;
-            const char *endPtr =
-                    skipToEndOfInterpolatedExpression(curPtr, getBufferEnd());
-
-            if (*endPtr == ')') {
-                // Successfully scanned the body of the expression literal.
-                curPtr = endPtr + 1;
-            } else {
-                curPtr = endPtr;
-                wasErroneous = true;
-            }
-            continue;
-        }
-
-        // String literals cannot have \n or \r in them.
-        if (*curPtr == '\r' || *curPtr == '\n' || curPtr == getBufferEnd()) {
-            return formToken(Token::unknown, tokStart);
-        }
-
-        unsigned CharValue = lexCharacter(curPtr, *tokStart);
-        wasErroneous |= CharValue == ~1U;
-
-        // If this is the end of string, we are done.  If it is a normal character
-        // or an already-diagnosed error, just munch it.
-        if (CharValue == ~0U) {
-            curPtr++;
-            if (wasErroneous)
-                return formToken(Token::unknown, tokStart);
-
-            if (*curPtr == '\'') {
-                // Complain about single-quote string and suggest replacement with
-                // double-quoted equivalent.
-                llvm::StringRef orig(tokStart, curPtr - tokStart);
-                llvm::SmallString<32> replacement;
-                replacement += '"';
-                std::string str = orig.slice(1, orig.size() - 1).str();
-                std::string quot = "\"";
-                size_t pos = 0;
-                while (pos != str.length()) {
-                    if (str.at(pos) == '\\') {
-                        if (str.at(pos + 1) == '\'') {
-                            // Un-escape escaped single quotes.
-                            str.replace(pos, 2, "'");
-                            ++pos;
-                        } else {
-                            // Skip over escaped characters.
-                            pos += 2;
-                        }
-                    } else if (str.at(pos) == '"') {
-                        str.replace(pos, 1, "\\\"");
-                        // Advance past the newly added ["\""].
-                        pos += 2;
-                    } else {
-                        ++pos;
-                    }
-                }
-                replacement += llvm::StringRef(str);
-                replacement += '"';
-            }
-            return formToken(Token::string_literal, tokStart);
-        }
-    }
-}
-
-/// lexCharacter - Read a character and return its UTF32 code.  If this is the
-/// end of enclosing string/character sequence (i.e. the character is equal to
-/// 'StopQuote'), this returns ~0U and leaves 'CurPtr' pointing to the terminal
-/// quote.  If this is a malformed character sequence, it emits a diagnostic
-/// (when EmitDiagnostics is true) and returns ~1U.
+/// Lex a string literal.
 ///
-///   character_escape  ::= [\][\] | [\]t | [\]n | [\]r | [\]" | [\]' | [\]0
-///   character_escape  ::= unicode_character_escape
-unsigned Lexer::lexCharacter(const char *&CurPtr, char StopQuote) {
-    const char *CharStart = CurPtr;
+///   string-literal ::= '"' [^"\n\f\v\r]* '"' MLIR
+///
+/// TODO: define escaping rules.
+Token Lexer::lexString(const char *tokStart) {
+    assert(curPtr[-1] == '"');
 
-    switch (*CurPtr++) {
-        default: {// Normal characters are part of the string.
-            // If this is a "high" UTF-8 character, validate it.
-            if ((signed char) (CurPtr[-1]) >= 0) {
-                return CurPtr[-1];
-            }
-            --CurPtr;
-            unsigned CharValue = validateUTF8CharacterAndAdvance(CurPtr, getBufferEnd());
-            if (CharValue != ~0U) return CharValue;
-            return ~1U;
-        }
-        case '"':
-        case '\'':
-            // If we found a closing quote character, we're done.
-            if (CurPtr[-1] == StopQuote) {
-                --CurPtr;
-                return ~0U;
-            }
-            // Otherwise, this is just a character.
-            return CurPtr[-1];
+    while (true) {
+        // Check to see if there is a code completion location within the string. In
+        // these cases we generate a completion location and place the currently
+        // lexed string within the token. This allows for the parser to use the
+        // partially lexed string when computing the completion results.
+        if (curPtr == codeCompleteLoc)
+            return formToken(Token::code_complete, tokStart);
 
-        case 0:
-            if (CurPtr - 1 != getBufferEnd()) {
-                // If we found a null character, we're done.
-                return CurPtr[-1];
-            }
-            // Move the pointer back to EOF.
-            --CurPtr;
-            LLVM_FALLTHROUGH;
-        case '\n':  // String literals cannot have \n or \r in them.
-        case '\r':
-            return ~1U;
-        case '\\':  // Escapes.
-            break;
-    }
+        switch (*curPtr++) {
+            case '"':
+                return formToken(Token::string_literal, tokStart);
+            case 0:
+                // If this is a random nul character in the middle of a string, just
+                // include it.  If it is the end of file, then it is an error.
+                if (curPtr - 1 != curBuffer.end())
+                    continue;
+                LLVM_FALLTHROUGH;
+            case '\n':
+            case '\v':
+            case '\f':
+                return emitError(curPtr - 1, "expected '\"' in string literal");
+            case '\\':
+                // Handle explicitly a few escapes.
+                if (*curPtr == '"' || *curPtr == '\\' || *curPtr == 'n' || *curPtr == 't')
+                    ++curPtr;
+                else if (llvm::isHexDigit(*curPtr) && llvm::isHexDigit(curPtr[1]))
+                    // Support \xx for two hex digits.
+                    curPtr += 2;
+                else
+                    return emitError(curPtr - 1, "unknown escape in string literal");
+                continue;
 
-    unsigned CharValue = 0;
-    // Escape processing.  We already ate the "\".
-    switch (*CurPtr) {
-        default:  // Invalid escape.
-            llvm::errs() << "Lexer::lexCharacter: Invalid escape.\n";
-            // If this looks like a plausible escape character, recover as though this
-            // is an invalid escape.
-            if (llvm::isAlnum(*CurPtr)) ++CurPtr;
-            return ~1U;
-
-            // Simple single-character escapes.
-        case '0':
-            ++CurPtr;
-            return '\0';
-        case 'n':
-            ++CurPtr;
-            return '\n';
-        case 'r':
-            ++CurPtr;
-            return '\r';
-        case 't':
-            ++CurPtr;
-            return '\t';
-        case '"':
-            ++CurPtr;
-            return '"';
-        case '\'':
-            ++CurPtr;
-            return '\'';
-        case '\\':
-            ++CurPtr;
-            return '\\';
-        case 'u': {  //  \u HEX HEX HEX HEX
-            ++CurPtr;
-            if (*CurPtr != '{') {
-                llvm::errs() << "Lexer::lexCharacter: Invalid unicode escape.\n";
-                return ~1U;
-            }
-
-            CharValue = lexUnicodeEscape(CurPtr);
-            if (CharValue == ~1U) return ~1U;
-            break;
+            default:
+                continue;
         }
     }
-
-    // Check to see if the encoding is valid.
-    llvm::SmallString<64> TempString;
-    if (CharValue >= 0x80 && EncodeToUTF8(CharValue, TempString)) {
-        llvm::errs() << "Lexer::lexCharacter: Invalid unicode scalar.\n";
-        return ~1U;
-    }
-
-    return CharValue;
-}
-
-///   unicode_character_escape ::= [\]u{hex+}
-///   hex                      ::= [0-9a-fA-F]
-unsigned Lexer::lexUnicodeEscape(const char *&CurPtr) {
-    assert(CurPtr[0] == '{' && "Invalid unicode escape");
-    ++CurPtr;
-
-    const char *DigitStart = CurPtr;
-
-    unsigned NumDigits = 0;
-    for (; llvm::isHexDigit(CurPtr[0]); ++NumDigits)
-        ++CurPtr;
-
-    if (CurPtr[0] != '}') {
-        llvm::errs() << "Lexer::lexUnicodeEscape: Invalid unicode escape.\n";
-        return ~1U;
-    }
-    ++CurPtr;
-
-    if (NumDigits < 1 || NumDigits > 8) {
-        llvm::errs() << "Lexer::lexUnicodeEscape: Invalid unicode escape.\n";
-        return ~1U;
-    }
-
-    unsigned CharValue = 0;
-    llvm::StringRef(DigitStart, NumDigits).getAsInteger(16, CharValue);
-    return CharValue;
-}
-
-
-static bool isValidIdentifierContinuationCodePoint(uint32_t c) {
-//    if (c < 0x80)
-//        return clang::isIdentifierBody(c, /*dollar*/true);
-
-    // N1518: Recommendations for extended identifier characters for C and C++
-    // Proposed Annex X.1: Ranges of characters allowed
-    return c == 0x00A8 || c == 0x00AA || c == 0x00AD || c == 0x00AF
-           || (c >= 0x00B2 && c <= 0x00B5) || (c >= 0x00B7 && c <= 0x00BA)
-           || (c >= 0x00BC && c <= 0x00BE) || (c >= 0x00C0 && c <= 0x00D6)
-           || (c >= 0x00D8 && c <= 0x00F6) || (c >= 0x00F8 && c <= 0x00FF)
-
-           || (c >= 0x0100 && c <= 0x167F)
-           || (c >= 0x1681 && c <= 0x180D)
-           || (c >= 0x180F && c <= 0x1FFF)
-
-           || (c >= 0x200B && c <= 0x200D)
-           || (c >= 0x202A && c <= 0x202E)
-           || (c >= 0x203F && c <= 0x2040)
-           || c == 0x2054
-           || (c >= 0x2060 && c <= 0x206F)
-
-           || (c >= 0x2070 && c <= 0x218F)
-           || (c >= 0x2460 && c <= 0x24FF)
-           || (c >= 0x2776 && c <= 0x2793)
-           || (c >= 0x2C00 && c <= 0x2DFF)
-           || (c >= 0x2E80 && c <= 0x2FFF)
-
-           || (c >= 0x3004 && c <= 0x3007)
-           || (c >= 0x3021 && c <= 0x302F)
-           || (c >= 0x3031 && c <= 0x303F)
-
-           || (c >= 0x3040 && c <= 0xD7FF)
-
-           || (c >= 0xF900 && c <= 0xFD3D)
-           || (c >= 0xFD40 && c <= 0xFDCF)
-           || (c >= 0xFDF0 && c <= 0xFE44)
-           || (c >= 0xFE47 && c <= 0xFFF8)
-
-           || (c >= 0x10000 && c <= 0x1FFFD)
-           || (c >= 0x20000 && c <= 0x2FFFD)
-           || (c >= 0x30000 && c <= 0x3FFFD)
-           || (c >= 0x40000 && c <= 0x4FFFD)
-           || (c >= 0x50000 && c <= 0x5FFFD)
-           || (c >= 0x60000 && c <= 0x6FFFD)
-           || (c >= 0x70000 && c <= 0x7FFFD)
-           || (c >= 0x80000 && c <= 0x8FFFD)
-           || (c >= 0x90000 && c <= 0x9FFFD)
-           || (c >= 0xA0000 && c <= 0xAFFFD)
-           || (c >= 0xB0000 && c <= 0xBFFFD)
-           || (c >= 0xC0000 && c <= 0xCFFFD)
-           || (c >= 0xD0000 && c <= 0xDFFFD)
-           || (c >= 0xE0000 && c <= 0xEFFFD);
-}
-
-static bool isValidIdentifierStartCodePoint(uint32_t c) {
-    if (!isValidIdentifierContinuationCodePoint(c))
-        return false;
-    if (c < 0x80 && (llvm::isDigit(c) || c == '$'))
-        return false;
-
-    // N1518: Recommendations for extended identifier characters for C and C++
-    // Proposed Annex X.2: Ranges of characters disallowed initially
-    if ((c >= 0x0300 && c <= 0x036F) ||
-        (c >= 0x1DC0 && c <= 0x1DFF) ||
-        (c >= 0x20D0 && c <= 0x20FF) ||
-        (c >= 0xFE20 && c <= 0xFE2F))
-        return false;
-
-    return true;
-}
-
-static bool advanceIf(char const *&ptr, char const *end,
-                      bool (*predicate)(uint32_t)) {
-    char const *next = ptr;
-    uint32_t c = validateUTF8CharacterAndAdvance(next, end);
-    if (c == ~0U)
-        return false;
-    if (predicate(c)) {
-        ptr = next;
-        return true;
-    }
-    return false;
-
-}
-
-/// isOperatorStartCodePoint - Return true if the specified code point is a
-/// valid start of an operator.
-static bool isOperatorStartCodePoint(uint32_t C) {
-    // ASCII operator chars.
-    static const char OpChars[] = "/=-+*%<>!&|^~.?";
-    if (C < 0x80)
-        return memchr(OpChars, C, sizeof(OpChars) - 1) != 0;
-
-    // Unicode math, symbol, arrow, dingbat, and line/box drawing chars.
-    return (C >= 0x00A1 && C <= 0x00A7)
-           || C == 0x00A9 || C == 0x00AB || C == 0x00AC || C == 0x00AE
-           || C == 0x00B0 || C == 0x00B1 || C == 0x00B6 || C == 0x00BB
-           || C == 0x00BF || C == 0x00D7 || C == 0x00F7
-           || C == 0x2016 || C == 0x2017 || (C >= 0x2020 && C <= 0x2027)
-           || (C >= 0x2030 && C <= 0x203E) || (C >= 0x2041 && C <= 0x2053)
-           || (C >= 0x2055 && C <= 0x205E) || (C >= 0x2190 && C <= 0x23FF)
-           || (C >= 0x2500 && C <= 0x2775) || (C >= 0x2794 && C <= 0x2BFF)
-           || (C >= 0x2E00 && C <= 0x2E7F) || (C >= 0x3001 && C <= 0x3003)
-           || (C >= 0x3008 && C <= 0x3030);
-}
-
-/// isOperatorContinuationCodePoint - Return true if the specified code point
-/// is a valid operator code point.
-static bool isOperatorContinuationCodePoint(uint32_t C) {
-    if (isOperatorStartCodePoint(C))
-        return true;
-
-    // Unicode combining characters and variation selectors.
-    return (C >= 0x0300 && C <= 0x036F)
-           || (C >= 0x1DC0 && C <= 0x1DFF)
-           || (C >= 0x20D0 && C <= 0x20FF)
-           || (C >= 0xFE00 && C <= 0xFE0F)
-           || (C >= 0xFE20 && C <= 0xFE2F)
-           || (C >= 0xE0100 && C <= 0xE01EF);
-}
-
-static bool advanceIfValidStartOfIdentifier(char const *&ptr,
-                                            char const *end) {
-    return advanceIf(ptr, end, isValidIdentifierStartCodePoint);
-}
-
-static bool advanceIfValidContinuationOfIdentifier(char const *&ptr,
-                                                   char const *end) {
-    return advanceIf(ptr, end, isValidIdentifierContinuationCodePoint);
-}
-
-static bool advanceIfValidStartOfOperator(char const *&ptr,
-                                          char const *end) {
-    return advanceIf(ptr, end, isOperatorStartCodePoint);
-}
-
-static bool advanceIfValidContinuationOfOperator(char const *&ptr,
-                                                 char const *end) {
-    return advanceIf(ptr, end, isOperatorContinuationCodePoint);
-}
-
-/// lexOperatorIdentifier - Match identifiers formed out of punctuation.
-Token Lexer::lexOperatorIdentifier(const char *tokStart) {
-    const char *TokStart = curPtr - 1;
-    curPtr = TokStart;
-    bool didStart = advanceIfValidStartOfOperator(curPtr, getBufferEnd());
-    assert(didStart && "unexpected operator start");
-    (void) didStart;
-
-    do {
-
-        // '.' cannot appear in the middle of an operator unless the operator
-        // started with a '.'.
-        if (*curPtr == '.' && *TokStart != '.')
-            break;
-    } while (advanceIfValidContinuationOfOperator(curPtr, getBufferEnd()));
-
-    if (curPtr - TokStart > 2) {
-        // If there is a "//" or "/*" in the middle of an identifier token,
-        // it starts a comment.
-        for (auto Ptr = TokStart + 1; Ptr != curPtr - 1; ++Ptr) {
-            if (Ptr[0] == '/' && (Ptr[1] == '/' || Ptr[1] == '*')) {
-                curPtr = Ptr;
-                break;
-            }
-        }
-    }
-
-    // Decide between the binary, prefix, and postfix cases.
-    // It's binary if either both sides are bound or both sides are not bound.
-    // Otherwise, it's postfix if left-bound and prefix if right-bound.
-    bool leftBound = isLeftBound(TokStart, getBufferBegin());
-    bool rightBound = isRightBound(curPtr, leftBound, codeCompleteLoc);
-
-    // Match various reserved words.
-    if (curPtr - TokStart == 1) {
-        switch (TokStart[0]) {
-            case '=':
-                if (leftBound != rightBound) {
-                    return emitError(tokStart, "invalid operator '='");
-                }
-                // always emit 'tok::equal' to avoid trickle down parse errors
-                return formToken(Token::equal, TokStart);
-            case '&':
-                if (leftBound == rightBound || leftBound)
-                    break;
-                return formToken(Token::amp_prefix, TokStart);
-            case '.': {
-                if (leftBound == rightBound)
-                    return formToken(Token::period, TokStart);
-                if (rightBound)
-                    return formToken(Token::period_prefix, TokStart);
-
-                // If left bound but not right bound, handle some likely situations.
-
-                // If there is just some horizontal whitespace before the next token, its
-                // addition is probably incorrect.
-                const char *AfterHorzWhitespace = curPtr;
-                while (*AfterHorzWhitespace == ' ' || *AfterHorzWhitespace == '\t')
-                    ++AfterHorzWhitespace;
-
-                // First, when we are code completing "x. <ESC>", then make sure to return
-                // a tok::period, since that is what the user is wanting to know about.
-                if (*AfterHorzWhitespace == '\0' &&
-                    AfterHorzWhitespace == codeCompleteLoc) {
-
-                    return formToken(Token::period, TokStart);
-                }
-
-                if (isRightBound(AfterHorzWhitespace, leftBound, codeCompleteLoc) &&
-                    // Don't consider comments to be this.  A leading slash is probably
-                    // either // or /* and most likely occurs just in our testsuite for
-                    // expected-error lines.
-                    *AfterHorzWhitespace != '/') {
-                    return formToken(Token::period, TokStart);
-                }
-
-                // Otherwise, it is probably a missing member.
-                return formToken(Token::unknown, TokStart);
-            }
-            case '?':
-                if (leftBound)
-                    return formToken(Token::question_postfix, TokStart);
-                return formToken(Token::question_infix, TokStart);
-        }
-    } else if (curPtr - TokStart == 2) {
-        switch ((TokStart[0] << 8) | TokStart[1]) {
-            case ('-' << 8) | '>': // ->
-                return formToken(Token::arrow, TokStart);
-            case ('*' << 8) | '/': // */
-                return formToken(Token::unknown, TokStart);
-        }
-    } else {
-        // Verify there is no "*/" in the middle of the identifier token, we reject
-        // it as potentially ending a block comment.
-        auto Pos = llvm::StringRef(TokStart, curPtr - TokStart).find("*/");
-        if (Pos != llvm::StringRef::npos) {
-            return formToken(Token::unknown, TokStart);
-        }
-    }
-
-    if (leftBound == rightBound)
-        return formToken(leftBound ? Token::oper_binary_unspaced :
-                         Token::oper_binary_spaced, TokStart);
-
-    return formToken(leftBound ? Token::oper_postfix : Token::oper_prefix, TokStart);
 }
 
 /// lexIdentifier - Match [a-zA-Z_][a-zA-Z_$0-9]*
@@ -653,6 +248,21 @@ Token Lexer::lexIdentifier(const char *tokStart) {
 
     return Token(kind, spelling);
 }
+
+/// lexOperatorIdentifier - Match identifiers formed out of punctuation.
+Token Lexer::lexOperatorIdentifier(const char *tokStart) {
+
+    // Decide between the binary, prefix, and postfix cases.
+    // It's binary if either both sides are bound or both sides are not bound.
+    // Otherwise, it's postfix if left-bound and prefix if right-bound.
+
+    return formToken(Token::error, tokStart);
+}
+
+Token Lexer::lexEscapedIdentifier(const char *start) {
+    return Token(Token::error, llvm::StringRef());
+}
+
 
 Token Lexer::lexToken() {
     while (true) {
@@ -811,6 +421,9 @@ Token Lexer::lexToken() {
             case '"':
             case '\'':
                 return lexString(tokStart);
+
+            case '`':
+                return lexEscapedIdentifier(tokStart);
         }
     }
 }

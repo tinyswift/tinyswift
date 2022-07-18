@@ -58,21 +58,19 @@ namespace tinyswift {
         /// the position of a code completion token.
         const char *codeCompleteLoc;
 
-        Lexer(const Lexer &) = delete;
-
-        void operator=(const Lexer &) = delete;
-
         Token lexNumber(const char *tokStart);
 
         Token lexString(const char *tokStart);
 
-        unsigned int lexCharacter(const char *&CurPtr, char StopQuote);
-
-        unsigned int lexUnicodeEscape(const char *&CurPtr);
-
         Token lexOperatorIdentifier(const char *tokStart);
 
         Token lexIdentifier(const char *tokStart);
+
+        Token lexEscapedIdentifier(const char *start);
+
+        Lexer(const Lexer &) = delete;
+
+        void operator=(const Lexer &) = delete;
     };
 
 }
