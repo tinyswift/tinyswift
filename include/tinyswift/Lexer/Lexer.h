@@ -10,12 +10,23 @@
 
 namespace tinyswift {
 
+    class CodeCompleteContext {
+    public:
+        /// Return the source location used to provide code completion.
+        llvm::SMLoc getCodeCompleteLoc() const { return loc; }
+
+    private:
+        /// The location used to code complete.
+        llvm::SMLoc loc;
+    };
+
+
     class Lexer {
 
     public:
 
         /// Constructor for Lexer
-        explicit Lexer(const llvm::SourceMgr &sourceMgr);
+        explicit Lexer(const llvm::SourceMgr &sourceMgr, CodeCompleteContext *codeCompleteContext);
 
         const llvm::SourceMgr &getSourceMgr() { return sourceMgr; }
 

@@ -10,10 +10,15 @@
 
 using namespace tinyswift;
 
-Lexer::Lexer(const llvm::SourceMgr &sourceMgr) : sourceMgr(sourceMgr) {
+Lexer::Lexer(const llvm::SourceMgr &sourceMgr, CodeCompleteContext *codeCompleteContext) : sourceMgr(sourceMgr),
+                                                                                           codeCompleteLoc(nullptr) {
     auto bufferID = sourceMgr.getMainFileID();
     curBuffer = sourceMgr.getMemoryBuffer(bufferID)->getBuffer();
     curPtr = curBuffer.begin();
+
+    // Initialize code completion.
+    if (codeCompleteContext)
+        codeCompleteLoc = codeCompleteContext->getCodeCompleteLoc().getPointer();
 }
 
 /// emitError - Emit an error message and return an Token::error token.
@@ -249,12 +254,49 @@ Token Lexer::lexIdentifier(const char *tokStart) {
     return Token(kind, spelling);
 }
 
+
+
 /// lexOperatorIdentifier - Match identifiers formed out of punctuation.
 Token Lexer::lexOperatorIdentifier(const char *tokStart) {
 
     // Decide between the binary, prefix, and postfix cases.
     // It's binary if either both sides are bound or both sides are not bound.
     // Otherwise, it's postfix if left-bound and prefix if right-bound.
+    bool leftBound = isLeftBound(tokStart, getBufferBegin());
+    bool rightBound = isRightBound(curPtr, leftBound, codeCompleteLoc);
+
+//    while (advanceIfValidContinuationOfOperator())) {
+//        switch (*curPtr++) {
+//
+//            default:
+//                return formToken(Token::error, tokStart);
+//                continue;
+//        }
+//    }
+
+
+    // Match various reserved words.
+    if (curPtr - tokStart == 1) {
+        switch (tokStart[0]){
+            case '=':
+                if (leftBound != rightBound) {
+                    // fixit error
+                }
+                // always emit 'tok::equal' to avoid trickle down parse errors
+                return formToken(Token::equal, tokStart);
+            case '&':
+                if (leftBound == rightBound || leftBound)
+                    break;
+                return formToken(Token::amp_prefix, tokStart);
+            case '?':
+                if (leftBound)
+                    return formToken(Token::question_postfix, tokStart);
+                return formToken(Token::question_infix, tokStart);
+        }
+        }
+
+
+
 
     return formToken(Token::error, tokStart);
 }

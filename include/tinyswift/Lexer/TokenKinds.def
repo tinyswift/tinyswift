@@ -132,15 +132,6 @@ PUNCTUATOR(exclaim_postfix, "!") // if left-bound
 PUNCTUATOR(question_postfix, "?") // if left-bound
 PUNCTUATOR(question_infix, "?")    // if not left-bound
 
-PUNCTUATOR(sil_dollar,    "$")    // Only in SIL mode.
-PUNCTUATOR(sil_exclamation, "!")    // Only in SIL mode.
-
-// Legacy punctuators used for migrating old object literal syntax.
-// NOTE: Remove in the future.
-PUNCTUATOR(l_square_lit,  "[#")
-PUNCTUATOR(r_square_lit,  "#]")
-
-
 #undef KEYWORD
 #undef DECL_KEYWORD
 #undef STMT_KEYWORD

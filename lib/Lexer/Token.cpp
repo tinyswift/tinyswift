@@ -42,7 +42,7 @@ llvm::StringRef Token::getTokenSpelling() {
             return "identifier";
 
 #define KEYWORD(X) case kw_ ## X: return #X;
-#define PUNCTUATOR(X, Y) case X: return Y;
+#define PUNCTUATOR(X, Y) case X: return #X;
 
 #include "tinyswift/Lexer/TokenKinds.def"
 
