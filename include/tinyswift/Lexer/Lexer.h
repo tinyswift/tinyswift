@@ -6,8 +6,8 @@
 #define TINYSWIFT_LEXER_H
 
 #include "LangOptions.h"
-#include "SourceManager.h"
 #include "Token.h"
+#include "tinyswift/Source/SourceManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/SaveAndRestore.h"
 

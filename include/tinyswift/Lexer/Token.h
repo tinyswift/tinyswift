@@ -5,7 +5,7 @@
 #ifndef TINYSWIFT_TOKEN_H
 #define TINYSWIFT_TOKEN_H
 
-#include "SourceLoc.h"
+#include "tinyswift/Source/SourceLoc.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"

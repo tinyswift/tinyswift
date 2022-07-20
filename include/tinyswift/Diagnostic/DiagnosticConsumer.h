@@ -5,7 +5,7 @@
 #ifndef TINYSWIFT_DIAGNOSTICCONSUMER_H
 #define TINYSWIFT_DIAGNOSTICCONSUMER_H
 
-#include "tinyswift/Lexer/SourceLoc.h"
+#include "tinyswift/Source/SourceLoc.h"
 #include "llvm/Support/SourceMgr.h"
 
 namespace tinyswift {

@@ -2,7 +2,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "tinyswift/Lexer/SourceManager.h"
+#include "tinyswift/Source/SourceManager.h"
 
 using namespace tinyswift;
 
