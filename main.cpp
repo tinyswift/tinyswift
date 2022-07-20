@@ -1,27 +1,10 @@
-#include <iostream>
-#include <llvm/Support/raw_ostream.h>
-#include "tinyswift/Lexer/Lexer.h"
 
-#include "llvm/ADT/StringRef.h"
+#include "tinyswift/Lexer/Token.h"
 
-int main(int argc, char **argv) {
-    llvm::StringRef Buffer = "var x = 1; func main() { return 1; }";
+int main(){
 
-    llvm::SourceMgr sourceMgr = llvm::SourceMgr();
-    std::unique_ptr<llvm::MemoryBuffer> memBuffer = llvm::MemoryBuffer::getMemBuffer(Buffer);
-    sourceMgr.AddNewSourceBuffer(std::move(memBuffer), llvm::SMLoc());
-
-    tinyswift::Lexer lexer(sourceMgr);
-    tinyswift::Token token = lexer.lexToken();
-
-    llvm::raw_ostream &output = llvm::outs();
-    while (token.isNot(tinyswift::Token::eof)) {
-        output << token.getTokenSpelling() + " " + token.getSpelling() << "\n";
-        token = lexer.lexToken();
-    }
-
-    output << token.getTokenSpelling() + " " + token.getSpelling() << "\n";
-    output << "Done\n";
-
+    tinyswift::Token T;
+    T.setKind(tinyswift::tok::identifier);
+    assert(T.is(tinyswift::tok::identifier));
     return 0;
 }
