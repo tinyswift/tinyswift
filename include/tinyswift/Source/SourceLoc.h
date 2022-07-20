@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"
+#include "llvm/Support/raw_ostream.h"
 #include <functional>
 
 namespace tinyswift {
