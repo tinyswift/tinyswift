@@ -502,23 +502,8 @@ bool Lexer::isOperator(llvm::StringRef string) {
 tok Lexer::kindOfIdentifier(llvm::StringRef Str, bool InSILMode) {
   tok Kind = llvm::StringSwitch<tok>(Str)
 #define KEYWORD(kw) .Case(#kw, tok::kw_##kw)
-
 #include "tinyswift/Lexer/TokenKinds.def"
-
                  .Default(tok::identifier);
-
-  // SIL keywords are only active in SIL mode.
-  switch (Kind) {
-#define SIL_KEYWORD(kw) case tok::kw_##kw:
-
-#include "tinyswift/Lexer/TokenKinds.def"
-
-    if (!InSILMode)
-      Kind = tok::identifier;
-    break;
-  default:
-    break;
-  }
   return Kind;
 }
 
