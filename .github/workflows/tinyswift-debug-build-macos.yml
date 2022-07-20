@@ -20,20 +20,20 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install LLVM
-      run: |
-        brew install llvm@13
-        echo 'export PATH="/usr/local/opt/llvm@13/bin:$PATH"' >> /Users/runner/.bash_profile
-        source ~/.bash_profile
-        export LDFLAGS="-L/usr/local/opt/llvm@13/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm@13/include"
+#     - name: Install LLVM
+#       run: |
+#         brew install llvm@13
+#         echo 'export PATH="/usr/local/opt/llvm@13/bin:$PATH"' >> /Users/runner/.bash_profile
+#         source ~/.bash_profile
+#         export LDFLAGS="-L/usr/local/opt/llvm@13/lib"
+#         export CPPFLAGS="-I/usr/local/opt/llvm@13/include"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: export PATH="/usr/local/opt/llvm/bin:$PATH" && cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: export PATH="/usr/local/opt/llvm/bin:$PATH" && cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
