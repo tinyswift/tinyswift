@@ -13,10 +13,9 @@
 #include <vector>
 
 namespace tinyswift {
-    /// \brief A collection of options that affect the language dialect and
-    /// provide compiler debugging facilities.
-    class LangOptions {
-    };
-}
+/// \brief A collection of options that affect the language dialect and
+/// provide compiler debugging facilities.
+class LangOptions {};
+} // namespace tinyswift
 
-#endif //TINYSWIFT_LANGOPTIONS_H
+#endif // TINYSWIFT_LANGOPTIONS_H

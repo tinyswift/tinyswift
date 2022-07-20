@@ -18,16 +18,16 @@
 using namespace tinyswift;
 
 enum class tinyswift::DiagID : uint32_t {
-#define DIAG(KIND,ID,Options,Text,Signature) ID,
+#define DIAG(KIND, ID, Options, Text, Signature) ID,
 #include "tinyswift/Diagnostic/DiagnosticsAll.def"
 };
 
 // Define all of the diagnostic objects and initialize them with their
 // diagnostic IDs.
 namespace tinyswift {
-    namespace diag {
-#define DIAG(KIND,ID,Options,Text,Signature) \
-    detail::DiagWithArguments<void Signature>::type ID = { DiagID::ID };
+namespace diag {
+#define DIAG(KIND, ID, Options, Text, Signature)                               \
+  detail::DiagWithArguments<void Signature>::type ID = {DiagID::ID};
 #include "tinyswift/Diagnostic/DiagnosticsAll.def"
-    } // end namespace diag
-} // end namespace swift
+} // end namespace diag
+} // namespace tinyswift

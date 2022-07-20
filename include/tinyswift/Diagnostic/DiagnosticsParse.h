@@ -8,14 +8,14 @@
 #include "DiagnosticsCommon.h"
 
 namespace tinyswift {
-    namespace diag {
-        // Declare common diagnostics objects with their appropriate types.
-#define DIAG(KIND, ID, Options, Text, Signature) \
+namespace diag {
+// Declare common diagnostics objects with their appropriate types.
+#define DIAG(KIND, ID, Options, Text, Signature)                               \
   extern detail::DiagWithArguments<void Signature>::type ID;
 
 #include "DiagnosticsParse.def"
 
-    }
-}
+} // namespace diag
+} // namespace tinyswift
 
-#endif //TINYSWIFT_DIAGNOSTICSPARSE_H
+#endif // TINYSWIFT_DIAGNOSTICSPARSE_H
