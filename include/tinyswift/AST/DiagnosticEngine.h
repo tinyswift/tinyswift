@@ -9,7 +9,7 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace tinyswift {
-    class Decl;
+//    class Decl;
 
     class DiagnosticEngine;
 
@@ -219,7 +219,7 @@ namespace tinyswift {
         llvm::SmallVector<CharSourceRange, 2> Ranges;
         llvm::SmallVector<FixIt, 2> FixIts;
         SourceLoc Loc;
-        const Decl *Decl = nullptr;
+//        const Decl *Decl = nullptr;
 
     public:
         // All constructors are intentionally implicit.
@@ -247,11 +247,11 @@ namespace tinyswift {
 
         SourceLoc getLoc() const { return Loc; }
 
-        const class Decl *getDecl() const { return Decl; }
+//        const class Decl *getDecl() const { return Decl; }
 
         void setLoc(SourceLoc loc) { Loc = loc; }
 
-        void setDecl(const class Decl *decl) { Decl = decl; }
+//        void setDecl(const class Decl *decl) { Decl = decl; }
 
         /// Returns true if this object represents a particular diagnostic.
         ///
@@ -471,7 +471,7 @@ namespace tinyswift {
 
         /// \brief The set of declarations for which we have pretty-printed
         /// results that we can point to on the command line.
-        llvm::DenseMap<const Decl *, SourceLoc> PrettyPrintedDeclarations;
+//        llvm::DenseMap<const Decl *, SourceLoc> PrettyPrintedDeclarations;
 
         /// \brief The number of open diagnostic transactions. Diagnostics are only
         /// emitted once all transactions have closed.
@@ -642,13 +642,13 @@ namespace tinyswift {
         ///
         /// \returns An in-flight diagnostic, to which additional information can
         /// be attached.
-        InFlightDiagnostic diagnose(const Decl *decl, DiagID id,
-                                    llvm::ArrayRef<DiagnosticArgument> args) {
-            assert(!ActiveDiagnostic && "Already have an active diagnostic");
-            ActiveDiagnostic = Diagnostic(id, args);
-            ActiveDiagnostic->setDecl(decl);
-            return InFlightDiagnostic(*this);
-        }
+//        InFlightDiagnostic diagnose(const Decl *decl, DiagID id,
+//                                    llvm::ArrayRef<DiagnosticArgument> args) {
+//            assert(!ActiveDiagnostic && "Already have an active diagnostic");
+//            ActiveDiagnostic = Diagnostic(id, args);
+//            ActiveDiagnostic->setDecl(decl);
+//            return InFlightDiagnostic(*this);
+//        }
 
         /// \brief Emit an already-constructed diagnostic referencing the given
         /// declaration.
@@ -660,12 +660,12 @@ namespace tinyswift {
         ///
         /// \returns An in-flight diagnostic, to which additional information can
         /// be attached.
-        InFlightDiagnostic diagnose(const Decl *decl, const Diagnostic &diag) {
-            assert(!ActiveDiagnostic && "Already have an active diagnostic");
-            ActiveDiagnostic = diag;
-            ActiveDiagnostic->setDecl(decl);
-            return InFlightDiagnostic(*this);
-        }
+//        InFlightDiagnostic diagnose(const Decl *decl, const Diagnostic &diag) {
+//            assert(!ActiveDiagnostic && "Already have an active diagnostic");
+//            ActiveDiagnostic = diag;
+//            ActiveDiagnostic->setDecl(decl);
+//            return InFlightDiagnostic(*this);
+//        }
 
         /// \brief Emit a diagnostic with the given set of diagnostic arguments.
         ///
@@ -676,14 +676,14 @@ namespace tinyswift {
         ///
         /// \param args The diagnostic arguments, which will be converted to
         /// the types expected by the diagnostic \p ID.
-        template<typename ...ArgTypes>
-        InFlightDiagnostic
-        diagnose(const Decl *decl, Diag<ArgTypes...> id,
-                 typename detail::PassArgument<ArgTypes>::type... args) {
-            ActiveDiagnostic = Diagnostic(id, std::move(args)...);
-            ActiveDiagnostic->setDecl(decl);
-            return InFlightDiagnostic(*this);
-        }
+//        template<typename ...ArgTypes>
+//        InFlightDiagnostic
+//        diagnose(const Decl *decl, Diag<ArgTypes...> id,
+//                 typename detail::PassArgument<ArgTypes>::type... args) {
+//            ActiveDiagnostic = Diagnostic(id, std::move(args)...);
+//            ActiveDiagnostic->setDecl(decl);
+//            return InFlightDiagnostic(*this);
+//        }
 
         /// \returns true if diagnostic is marked with PointsToFirstBadToken
         /// option.
