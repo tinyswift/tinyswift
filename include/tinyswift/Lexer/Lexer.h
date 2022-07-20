@@ -11,7 +11,7 @@
 #include "SourceManager.h"
 #include "LangOptions.h"
 
-#include "tinyswift/AST/DiagnosticEngine.h"
+#include "tinyswift/Diagnostic/DiagnosticEngine.h"
 
 namespace tinyswift {
     class DiagnosticEngine;

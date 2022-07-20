@@ -5,7 +5,7 @@
 #ifndef TINYSWIFT_DIAGNOSTICENGINE_H
 #define TINYSWIFT_DIAGNOSTICENGINE_H
 
-#include "tinyswift/Lexer/DiagnosticConsumer.h"
+#include "DiagnosticConsumer.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace tinyswift {

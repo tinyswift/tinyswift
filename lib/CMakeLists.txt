@@ -1,1 +1,2 @@
+add_subdirectory(Diagnostic)
 add_subdirectory(Lexer)

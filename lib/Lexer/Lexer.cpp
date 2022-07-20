@@ -5,7 +5,7 @@
 
 #include "tinyswift/Lexer/CharInfo.h"
 #include "tinyswift/Lexer/Lexer.h"
-#include "tinyswift/AST/DiagnosticsParse.h"
+#include "tinyswift/Diagnostic/DiagnosticsParse.h"
 #include "tinyswift/AST/Identifier.h"
 
 #include "llvm/Support/MathExtras.h"
