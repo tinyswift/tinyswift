@@ -6,6 +6,7 @@
 #define TINYSWIFT_DIAGNOSTICENGINE_H
 
 #include "DiagnosticConsumer.h"
+#include "tinyswift/AST/Identifier.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace tinyswift {
@@ -78,7 +79,7 @@ class DiagnosticArgument {
     int IntegerVal;
     unsigned UnsignedVal;
     llvm::StringRef StringVal;
-    //            DeclName IdentifierVal;
+    DeclName IdentifierVal;
     //            Type TypeVal;
     //            TypeRepr *TyR;
     PatternKind PatternKindVal;
@@ -97,15 +98,11 @@ public:
   DiagnosticArgument(unsigned I)
       : Kind(DiagnosticArgumentKind::Unsigned), UnsignedVal(I) {}
 
-  //        DiagnosticArgument(DeclName I)
-  //                : Kind(DiagnosticArgumentKind::Identifier), IdentifierVal(I)
-  //                {
-  //        }
-  //
-  //        DiagnosticArgument(Identifier I)
-  //                : Kind(DiagnosticArgumentKind::Identifier), IdentifierVal(I)
-  //                {
-  //        }
+  DiagnosticArgument(DeclName I)
+      : Kind(DiagnosticArgumentKind::Identifier), IdentifierVal(I) {}
+
+  DiagnosticArgument(Identifier I)
+      : Kind(DiagnosticArgumentKind::Identifier), IdentifierVal(I) {}
   //
   //        DiagnosticArgument(Type T)
   //                : Kind(DiagnosticArgumentKind::Type), TypeVal(T) {
@@ -167,10 +164,10 @@ public:
     return UnsignedVal;
   }
 
-  //        DeclName getAsIdentifier() const {
-  //            assert(Kind == DiagnosticArgumentKind::Identifier);
-  //            return IdentifierVal;
-  //        }
+  DeclName getAsIdentifier() const {
+    assert(Kind == DiagnosticArgumentKind::Identifier);
+    return IdentifierVal;
+  }
   //
   //        Type getAsType() const {
   //            assert(Kind == DiagnosticArgumentKind::Type);
