@@ -10,11 +10,9 @@
 #include "llvm/Support/SMLoc.h"
 #include "SourceLoc.h"
 
-namespace tinyswift
-{
+namespace tinyswift {
 
-    enum class tok
-    {
+    enum class tok {
         unknown = 0,
         eof,
         code_complete,
@@ -32,7 +30,7 @@ namespace tinyswift
 
 #define KEYWORD(X) kw_##X,
 #define PUNCTUATOR(X, Y) X,
-#define POUND_KEYWORD(X) pound_##X,
+//#define POUND_KEYWORD(X) pound_##X,
 #include "TokenKinds.def"
 
         NUM_TOKENS
@@ -43,28 +41,26 @@ namespace tinyswift
     /// information as possible about each returned token.  This is expected to be
     /// compressed into a smaller form if memory footprint is important.
     ///
-    class Token
-    {
+    class Token {
         /// Kind - The actual flavor of token this is.
         ///
         tok Kind;
 
         /// \brief Whether this token is the first token on the line.
-        unsigned AtStartOfLine : 1;
+        unsigned AtStartOfLine: 1;
 
         /// \brief The length of the comment that precedes the token.
         ///
         /// Hopefully 128 Mib is enough.
-        unsigned CommentLength : 27;
+        unsigned CommentLength: 27;
 
         /// \brief Whether this token is an escaped `identifier` token.
-        unsigned EscapedIdentifier : 1;
+        unsigned EscapedIdentifier: 1;
 
         /// Text - The actual string covered by the token in the source buffer.
         llvm::StringRef Text;
 
-        llvm::StringRef trimComment() const
-        {
+        llvm::StringRef trimComment() const {
             assert(hasComment() && "Has no comment to trim.");
             llvm::StringRef Raw(Text.begin() - CommentLength, CommentLength);
             return Raw.trim();
@@ -75,52 +71,50 @@ namespace tinyswift
                   EscapedIdentifier(false) {}
 
         tok getKind() const { return Kind; }
+
         void setKind(tok K) { Kind = K; }
 
         /// is/isNot - Predicates to check if this token is a specific kind, as in
         /// "if (Tok.is(tok::l_brace)) {...}".
         bool is(tok K) const { return Kind == K; }
+
         bool isNot(tok K) const { return Kind != K; }
 
         // Predicates to check to see if the token is any of a list of tokens.
 
-        bool isAny(tok K1) const
-        {
+        bool isAny(tok K1) const {
             return is(K1);
         }
-        template <typename... T>
-        bool isAny(tok K1, tok K2, T... K) const
-        {
+
+        template<typename... T>
+        bool isAny(tok K1, tok K2, T... K) const {
             if (is(K1))
                 return true;
             return isAny(K2, K...);
         }
 
         // Predicates to check to see if the token is not the same as any of a list.
-        template <typename... T>
+        template<typename... T>
         bool isNot(tok K1, T... K) const { return !isAny(K1, K...); }
 
-        bool isBinaryOperator() const
-        {
+        bool isBinaryOperator() const {
             return Kind == tok::oper_binary_spaced || Kind == tok::oper_binary_unspaced;
         }
 
-        bool isAnyOperator() const
-        {
+        bool isAnyOperator() const {
             return isBinaryOperator() || Kind == tok::oper_postfix ||
                    Kind == tok::oper_prefix;
         }
-        bool isNotAnyOperator() const
-        {
+
+        bool isNotAnyOperator() const {
             return !isAnyOperator();
         }
 
-        bool isEllipsis() const
-        {
+        bool isEllipsis() const {
             return isAnyOperator() && Text == "...";
         }
-        bool isNotEllipsis() const
-        {
+
+        bool isNotEllipsis() const {
             return !isEllipsis();
         }
 
@@ -132,60 +126,56 @@ namespace tinyswift
 
         /// \brief True if this token is an escaped identifier token.
         bool isEscapedIdentifier() const { return EscapedIdentifier; }
+
         /// \brief Set whether this token is an escaped identifier token.
-        void setEscapedIdentifier(bool value)
-        {
+        void setEscapedIdentifier(bool value) {
             assert((!value || Kind == tok::identifier) &&
                    "only identifiers can be escaped identifiers");
             EscapedIdentifier = value;
         }
 
-        bool isContextualKeyword(llvm::StringRef ContextKW) const
-        {
+        bool isContextualKeyword(llvm::StringRef ContextKW) const {
             return is(tok::identifier) && !isEscapedIdentifier() &&
                    Text == ContextKW;
         }
 
         /// Return true if this is a contextual keyword that could be the start of a
         /// decl.
-        bool isContextualDeclKeyword() const
-        {
+        bool isContextualDeclKeyword() const {
             if (isNot(tok::identifier) || isEscapedIdentifier() || Text.empty())
                 return false;
 
-            switch (Text[0])
-            {
-            case 'c':
-                return Text == "convenience";
-            case 'd':
-                return Text == "dynamic";
-            case 'f':
-                return Text == "final";
-            case 'i':
-                return Text == "indirect" || Text == "infix";
-            case 'l':
-                return Text == "lazy";
-            case 'm':
-                return Text == "mutating";
-            case 'n':
-                return Text == "nonmutating";
-            case 'o':
-                return Text == "open" || Text == "override" || Text == "optional";
-            case 'p':
-                return Text == "prefix" || Text == "postfix";
-            case 'r':
-                return Text == "required";
-            case 'u':
-                return Text == "unowned";
-            case 'w':
-                return Text == "weak";
-            default:
-                return false;
+            switch (Text[0]) {
+                case 'c':
+                    return Text == "convenience";
+                case 'd':
+                    return Text == "dynamic";
+                case 'f':
+                    return Text == "final";
+                case 'i':
+                    return Text == "indirect" || Text == "infix";
+                case 'l':
+                    return Text == "lazy";
+                case 'm':
+                    return Text == "mutating";
+                case 'n':
+                    return Text == "nonmutating";
+                case 'o':
+                    return Text == "open" || Text == "override" || Text == "optional";
+                case 'p':
+                    return Text == "prefix" || Text == "postfix";
+                case 'r':
+                    return Text == "required";
+                case 'u':
+                    return Text == "unowned";
+                case 'w':
+                    return Text == "weak";
+                default:
+                    return false;
             }
         }
 
-        bool isContextualPunctuator(llvm::StringRef ContextPunc) const
-        {
+        bool isContextualPunctuator(llvm::StringRef ContextPunc) const {
             return isAnyOperator() && Text == ContextPunc;
         }
 
@@ -193,8 +183,7 @@ namespace tinyswift
         ///
         /// This covers all identifiers and keywords except those keywords
         /// used
-        bool canBeArgumentLabel() const
-        {
+        bool canBeArgumentLabel() const {
             // Identifiers, escaped identifiers, and '_' can be argument labels.
             if (is(tok::identifier) || isEscapedIdentifier() || is(tok::kw__))
                 return true;
@@ -208,83 +197,72 @@ namespace tinyswift
         }
 
         /// True if the token is an identifier or '_'.
-        bool isIdentifierOrUnderscore() const
-        {
+        bool isIdentifierOrUnderscore() const {
             return isAny(tok::identifier, tok::kw__);
         }
 
         /// True if the token is an l_paren token that does not start a new line.
-        bool isFollowingLParen() const
-        {
+        bool isFollowingLParen() const {
             return !isAtStartOfLine() && Kind == tok::l_paren;
         }
 
         /// True if the token is an l_square token that does not start a new line.
-        bool isFollowingLSquare() const
-        {
+        bool isFollowingLSquare() const {
             return !isAtStartOfLine() && Kind == tok::l_square;
         }
 
         /// True if the token is any keyword.
-        bool isKeyword() const
-        {
-            switch (Kind)
-            {
+        bool isKeyword() const {
+            switch (Kind) {
 #define KEYWORD(X)    \
     case tok::kw_##X: \
         return true;
+
 #include "TokenKinds.def"
-            default:
-                return false;
+
+                default:
+                    return false;
             }
         }
 
         /// getLoc - Return a source location identifier for the specified
         /// offset in the current file.
-        SourceLoc getLoc() const
-        {
+        SourceLoc getLoc() const {
             return SourceLoc(llvm::SMLoc::getFromPointer(Text.begin()));
         }
 
         unsigned getLength() const { return Text.size(); }
 
-        CharSourceRange getRange() const
-        {
+        CharSourceRange getRange() const {
             return CharSourceRange(getLoc(), getLength());
         }
 
-        bool hasComment() const
-        {
+        bool hasComment() const {
             return CommentLength != 0;
         }
 
-        CharSourceRange getCommentRange() const
-        {
+        CharSourceRange getCommentRange() const {
             if (CommentLength == 0)
                 return CharSourceRange(SourceLoc(llvm::SMLoc::getFromPointer(Text.begin())),
                                        0);
             auto TrimedComment = trimComment();
             return CharSourceRange(
-                SourceLoc(llvm::SMLoc::getFromPointer(TrimedComment.begin())),
-                TrimedComment.size());
+                    SourceLoc(llvm::SMLoc::getFromPointer(TrimedComment.begin())),
+                    TrimedComment.size());
         }
 
-        SourceLoc getCommentStart() const
-        {
+        SourceLoc getCommentStart() const {
             if (CommentLength == 0)
                 return SourceLoc();
             return SourceLoc(llvm::SMLoc::getFromPointer(trimComment().begin()));
         }
 
-        llvm::StringRef getRawText() const
-        {
+        llvm::StringRef getRawText() const {
             return Text;
         }
 
-        llvm::StringRef getText() const
-        {
-            if (EscapedIdentifier)
-            {
+        llvm::StringRef getText() const {
+            if (EscapedIdentifier) {
                 // Strip off the backticks on either side.
                 assert(Text.front() == '`' && Text.back() == '`');
                 return Text.slice(1, Text.size() - 1);
@@ -295,8 +273,7 @@ namespace tinyswift
         void setText(llvm::StringRef T) { Text = T; }
 
         /// \brief Set the token to the specified kind and source range.
-        void setToken(tok K, llvm::StringRef T, unsigned CommentLength = 0)
-        {
+        void setToken(tok K, llvm::StringRef T, unsigned CommentLength = 0) {
             Kind = K;
             Text = T;
             this->CommentLength = CommentLength;

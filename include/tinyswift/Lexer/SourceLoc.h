@@ -17,20 +17,26 @@ namespace tinyswift {
 /// enforce purity in the Swift codebase.
     class SourceLoc {
         friend class SourceManager;
+
         friend class SourceRange;
+
         friend class CharSourceRange;
+
         friend class DiagnosticConsumer;
 
         llvm::SMLoc Value;
 
     public:
         SourceLoc() {}
+
         explicit SourceLoc(llvm::SMLoc Value) : Value(Value) {}
 
         bool isValid() const { return Value.isValid(); }
+
         bool isInvalid() const { return !isValid(); }
 
         bool operator==(const SourceLoc &RHS) const { return RHS.Value == Value; }
+
         bool operator!=(const SourceLoc &RHS) const { return !operator==(RHS); }
 
         /// Return a source location advanced a specified number of bytes.
@@ -74,18 +80,22 @@ namespace tinyswift {
         SourceLoc Start, End;
 
         SourceRange() {}
+
         SourceRange(SourceLoc Loc) : Start(Loc), End(Loc) {}
+
         SourceRange(SourceLoc Start, SourceLoc End) : Start(Start), End(End) {
             assert(Start.isValid() == End.isValid() &&
                    "Start and end should either both be valid or both be invalid!");
         }
 
         bool isValid() const { return Start.isValid(); }
+
         bool isInvalid() const { return !isValid(); }
 
         bool operator==(const SourceRange &other) const {
             return Start == other.Start && End == other.End;
         }
+
         bool operator!=(const SourceRange &other) const { return !operator==(other); }
 
         /// Print out the SourceRange.  If the locations are in the same buffer
@@ -124,16 +134,19 @@ namespace tinyswift {
         CharSourceRange(const SourceManager &SM, SourceRange Range) = delete;
 
         bool isValid() const { return Start.isValid(); }
+
         bool isInvalid() const { return !isValid(); }
 
         bool operator==(const CharSourceRange &other) const {
             return Start == other.Start && ByteLength == other.ByteLength;
         }
+
         bool operator!=(const CharSourceRange &other) const {
             return !operator==(other);
         }
 
         SourceLoc getStart() const { return Start; }
+
         SourceLoc getEnd() const { return Start.getAdvancedLocOrInvalid(ByteLength); }
 
         /// Returns true if the given source location is contained in the range.

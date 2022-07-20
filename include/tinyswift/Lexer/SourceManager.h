@@ -31,12 +31,13 @@ namespace tinyswift {
             int LineOffset;
         };
         std::map<const char *, VirtualFile> VirtualFiles;
-        mutable std::pair<const char *, const VirtualFile*> CachedVFile = {nullptr, nullptr};
+        mutable std::pair<const char *, const VirtualFile *> CachedVFile = {nullptr, nullptr};
 
     public:
         llvm::SourceMgr &getLLVMSourceMgr() {
             return LLVMSourceMgr;
         }
+
         const llvm::SourceMgr &getLLVMSourceMgr() const {
             return LLVMSourceMgr;
         }
@@ -176,8 +177,8 @@ namespace tinyswift {
             int LineOffset = getLineOffset(Loc);
             int l, c;
             std::tie(l, c) = LLVMSourceMgr.getLineAndColumn(Loc.Value, BufferID);
-            assert(LineOffset+l > 0 && "bogus line offset");
-            return { LineOffset + l, c };
+            assert(LineOffset + l > 0 && "bogus line offset");
+            return {LineOffset + l, c};
         }
 
         /// Returns the real line number for a source location.
@@ -191,7 +192,7 @@ namespace tinyswift {
         }
 
         llvm::StringRef extractText(CharSourceRange Range,
-                              llvm::Optional<unsigned> BufferID = llvm::None) const;
+                                    llvm::Optional<unsigned> BufferID = llvm::None) const;
 
         llvm::SMDiagnostic GetMessage(SourceLoc Loc, llvm::SourceMgr::DiagKind Kind,
                                       const llvm::Twine &Msg,
