@@ -52,7 +52,9 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
 #include "swift/Bridging/ASTGen.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/Sema/IDETypeChecking.h"
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Strings.h"

@@ -35,7 +35,9 @@
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/LLVMExtras.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/SIL/AbstractionPatternGenerators.h"
 #include "swift/SIL/PrettyStackTrace.h"
 #include "swift/SIL/SILArgument.h"

@@ -23,7 +23,9 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/FileTypes.h"
 #include "swift/Basic/PrettyStackTrace.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
+#endif
 #include "swift/DependencyScan/ModuleDependencyScanner.h"
 #include "swift/Frontend/ModuleInterfaceLoader.h"
 #include "swift/Serialization/SerializedModuleLoader.h"

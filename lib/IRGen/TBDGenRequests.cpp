@@ -15,7 +15,9 @@
 #include "swift/AST/Evaluator.h"
 #include "swift/AST/FileUnit.h"
 #include "swift/AST/Module.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
+#endif
 #include "swift/IRGen/TBDGen.h"
 #include "swift/Subsystems.h"
 #include "clang/Basic/TargetInfo.h"

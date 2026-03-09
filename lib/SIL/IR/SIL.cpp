@@ -24,7 +24,9 @@
 #include "swift/AST/ParameterList.h"
 #include "swift/AST/ProtocolConformance.h"
 #include "swift/Basic/Assertions.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"

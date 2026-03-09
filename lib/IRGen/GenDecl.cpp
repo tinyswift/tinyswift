@@ -29,7 +29,9 @@
 #include "swift/AST/TypeMemberVisitor.h"
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/IRGen/Linking.h"
 #include "swift/Runtime/HeapObject.h"

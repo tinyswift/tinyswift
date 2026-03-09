@@ -264,9 +264,11 @@ FRONTEND_STATISTIC(Sema, NumSwift6Errors)
 #include "swift/AST/NameLookupTypeIDZone.def"
 #include "swift/AST/TypeCheckerTypeIDZone.def"
 #include "swift/Sema/IDETypeCheckingRequestIDZone.def"
+#ifndef TINYSWIFT
 #include "swift/IDE/IDERequestIDZone.def"
 #include "swift/ClangImporter/ClangImporterTypeIDZone.def"
 #include "swift/ConstExtract/ConstExtractTypeIDZone.def"
+#endif
 #undef SWIFT_REQUEST
 
 #define SWIFT_REQUEST(ZONE, NAME, Sig, Caching, LocOptions) FRONTEND_STATISTIC(SILGen, NAME)

@@ -22,7 +22,9 @@
 #include "swift/AST/SourceFile.h"
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
+#endif
 #include "swift/Subsystems.h"
 
 using namespace swift;

@@ -24,7 +24,9 @@
 #include "swift/Basic/Platform.h"
 #include "swift/Basic/SourceManager.h"
 #include "clang/Frontend/Utils.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
+#endif
 
 namespace llvm {
 class FileCollectorBase;

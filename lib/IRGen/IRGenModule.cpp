@@ -24,7 +24,9 @@
 #include "swift/AST/ModuleDependencies.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/LLVMExtras.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
+#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/IRGen/IRGenPublic.h"
 #include "swift/IRGen/Linking.h"

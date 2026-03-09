@@ -64,10 +64,14 @@
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/StringExtras.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/Strings.h"
 #include "swift/Subsystems.h"
+#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
+#endif
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"

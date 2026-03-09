@@ -40,7 +40,9 @@
 #include "swift/AST/SubstitutionMap.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Platform.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/IRGen/Linking.h"
 #include "swift/SIL/SILDeclRef.h"
 #include "swift/SIL/SILDefaultWitnessTable.h"

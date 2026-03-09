@@ -49,7 +49,9 @@
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/StringExtras.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
+#endif
 #include "swift/Parse/Lexer.h"
 #include "swift/Sema/SILTypeResolutionContext.h"
 #include "swift/Strings.h"

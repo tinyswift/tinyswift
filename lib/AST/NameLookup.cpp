@@ -39,8 +39,10 @@
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/Parse/Lexer.h"
 #include "swift/Strings.h"
 #include "clang/AST/DeclObjC.h"

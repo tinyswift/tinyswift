@@ -26,7 +26,9 @@
 #include "swift/AST/SynthesizedFileUnit.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
+#endif
 #include "swift/SIL/FormalLinkage.h"
 #include "swift/SIL/SILLinkage.h"
 #include "swift/SIL/SILModule.h"

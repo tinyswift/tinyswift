@@ -48,9 +48,11 @@
 #include "swift/Basic/PathRemapper.h"
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/Version.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
 #include "swift/ClangImporter/ClangModule.h"
 #include "swift/ClangImporter/SwiftAbstractBasicWriter.h"
+#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/Serialization/Serialization.h"
 #include "swift/Serialization/SerializationOptions.h"

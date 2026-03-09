@@ -31,7 +31,9 @@
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Statistic.h"
+#ifndef TINYSWIFT
 #include "swift/IDE/TypeCheckCompletionCallback.h"
+#endif
 #include "swift/Sema/ConstraintSystem.h"
 #include "swift/Sema/SolutionResult.h"
 #include "llvm/ADT/DenseMap.h"

@@ -40,7 +40,9 @@
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/SourceLoc.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
+#endif
 #include "swift/Parse/Lexer.h"
 #include "swift/Sema/IDETypeChecking.h"
 #include "llvm/ADT/ArrayRef.h"

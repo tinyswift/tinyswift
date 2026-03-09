@@ -37,7 +37,9 @@
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Serialization/SerializationOptions.h"
 #include "swift/Serialization/SerializedSILLoader.h"
+#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
+#endif
 #include "swift/Subsystems.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

@@ -22,7 +22,9 @@
 #include "swift/Basic/LLVM.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Bridging/ASTGen.h"
+#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
+#endif
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"

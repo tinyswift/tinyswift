@@ -51,7 +51,9 @@
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/StringExtras.h"
 #include "swift/Basic/Unicode.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
+#endif
 #include "swift/Config.h"
 #include "swift/Parse/Lexer.h"
 #include "swift/Strings.h"

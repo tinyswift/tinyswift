@@ -11,13 +11,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "swift/Serialization/Serialization.h"
+#ifndef TINYSWIFT
 #include "swift/APIDigester/ModuleAnalyzerNodes.h"
+#endif
 #include "swift/AST/DiagnosticsFrontend.h"
 #include "swift/AST/FileSystem.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Subsystems.h"
+#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphGen.h"
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
+#endif
 #include "llvm/Support/SmallVectorMemoryBuffer.h"
 #include "llvm/Support/VirtualOutputBackend.h"
 

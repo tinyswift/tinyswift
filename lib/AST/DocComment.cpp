@@ -25,7 +25,9 @@
 #include "swift/AST/PrettyStackTrace.h"
 #include "swift/AST/RawComment.h"
 #include "swift/Basic/Assertions.h"
+#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
+#endif
 #include <queue>
 
 using namespace swift;

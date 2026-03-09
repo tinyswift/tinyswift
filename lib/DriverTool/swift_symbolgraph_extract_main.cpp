@@ -22,7 +22,9 @@
 #include "swift/Frontend/PrintingDiagnosticConsumer.h"
 #include "swift/Option/Options.h"
 #include "swift/Parse/ParseVersion.h"
+#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphGen.h"
+#endif
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"

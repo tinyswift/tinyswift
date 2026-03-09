@@ -34,7 +34,9 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Config.h"
+#ifndef TINYSWIFT
 #include "swift/Localization/LocalizationFormat.h"
+#endif
 #include "swift/Parse/Lexer.h" // bad dependency
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"

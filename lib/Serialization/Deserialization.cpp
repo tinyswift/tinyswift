@@ -37,9 +37,11 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
 #include "swift/Basic/Statistic.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
 #include "swift/ClangImporter/ClangModule.h"
 #include "swift/ClangImporter/SwiftAbstractBasicReader.h"
+#endif
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Attr.h"

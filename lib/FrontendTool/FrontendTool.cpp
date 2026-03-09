@@ -48,7 +48,9 @@
 #include "swift/Basic/TargetInfo.h"
 #include "swift/Basic/UUID.h"
 #include "swift/Basic/Version.h"
+#ifndef TINYSWIFT
 #include "swift/ConstExtract/ConstExtract.h"
+#endif
 #include "swift/DependencyScan/ScanDependencies.h"
 #include "swift/Frontend/CachedDiagnostics.h"
 #include "swift/Frontend/CachingUtils.h"
@@ -59,17 +61,23 @@
 #include "swift/Frontend/ModuleInterfaceLoader.h"
 #include "swift/Frontend/ModuleInterfaceSupport.h"
 #include "swift/IRGen/TBDGen.h"
+#ifndef TINYSWIFT
 #include "swift/Immediate/Immediate.h"
 #include "swift/Index/IndexRecord.h"
 #include "swift/Migrator/FixitFilter.h"
 #include "swift/Migrator/Migrator.h"
+#endif
 #include "swift/Option/Options.h"
+#ifndef TINYSWIFT
 #include "swift/PrintAsClang/PrintAsClang.h"
+#endif
 #include "swift/SILOptimizer/PassManager/Passes.h"
 #include "swift/Serialization/SerializationOptions.h"
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Subsystems.h"
+#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
+#endif
 
 #include "clang/Lex/Preprocessor.h"
 

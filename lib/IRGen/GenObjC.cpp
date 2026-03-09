@@ -30,7 +30,9 @@
 #include "swift/AST/IRGenOptions.h"
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
+#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
+#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/IRGen/Linking.h"
 #include "swift/SIL/PrettyStackTrace.h"

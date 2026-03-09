@@ -26,7 +26,9 @@
 #include "swift/Parse/ParseVersion.h"
 #include "swift/SIL/SILBridging.h"
 #include "swift/Strings.h"
+#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
+#endif
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"

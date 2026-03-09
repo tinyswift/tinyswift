@@ -13,7 +13,9 @@
 #ifndef SWIFT_AST_COMMENT_H
 #define SWIFT_AST_COMMENT_H
 
+#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
+#endif
 #include <optional>
 
 namespace swift {

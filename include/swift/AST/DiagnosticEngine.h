@@ -26,7 +26,9 @@
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/Version.h"
 #include "swift/Basic/WarningAsErrorRule.h"
+#ifndef TINYSWIFT
 #include "swift/Localization/LocalizationFormat.h"
+#endif
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"

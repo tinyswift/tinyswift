@@ -24,7 +24,9 @@
 #include "swift/Frontend/Frontend.h"
 #include "swift/Frontend/PrintingDiagnosticConsumer.h"
 #include "swift/Frontend/SerializedDiagnosticConsumer.h"
+#ifndef TINYSWIFT
 #include "swift/Migrator/FixitFilter.h"
+#endif
 #include "llvm/Support/raw_ostream.h"
 
 #if __has_include(<unistd.h>)
