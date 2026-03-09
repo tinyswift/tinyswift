@@ -1,0 +1,66 @@
+name: TinySwift CI
+on:
+  push: { branches: [main, release/*] }
+  pull_request: { branches: [main] }
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  LLVM_VERSION: "17.0.6"
+
+jobs:
+  build-macos:
+    name: Build (macOS)
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: brew install cmake ninja python3 sccache
+      - name: Install LLVM
+        run: |
+          curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/clang+llvm-${{ env.LLVM_VERSION }}-arm64-apple-darwin23.tar.xz" -o llvm.tar.xz
+          mkdir -p ${{ runner.temp }}/llvm
+          tar xf llvm.tar.xz -C ${{ runner.temp }}/llvm --strip-components=1
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: build/tinyswift-debug
+          key: macos-${{ hashFiles('CMakeLists.txt', 'lib/**/CMakeLists.txt') }}-${{ github.sha }}
+          restore-keys: macos-
+      - name: Configure & Build
+        run: |
+          cmake --preset tinyswift-debug \
+            -DCMAKE_C_COMPILER=${{ runner.temp }}/llvm/bin/clang \
+            -DCMAKE_CXX_COMPILER=${{ runner.temp }}/llvm/bin/clang++ \
+            -DLLVM_DIR=${{ runner.temp }}/llvm/lib/cmake/llvm \
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+          cmake --build --preset tinyswift-debug
+      - uses: actions/upload-artifact@v4
+        with: { name: tinyswiftc-macos, path: "build/tinyswift-debug/bin/", retention-days: 7 }
+
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y cmake ninja-build python3 \
+            libncurses5-dev libedit-dev libxml2-dev
+      - name: Install LLVM
+        run: |
+          wget -qO- "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/clang+llvm-${{ env.LLVM_VERSION }}-x86_64-linux-gnu-ubuntu-22.04.tar.xz" \
+            | tar xJ -C ${{ runner.temp }}
+          mv ${{ runner.temp }}/clang+llvm-* ${{ runner.temp }}/llvm
+      - name: Configure & Build
+        run: |
+          cmake --preset tinyswift-debug \
+            -DCMAKE_C_COMPILER=${{ runner.temp }}/llvm/bin/clang \
+            -DCMAKE_CXX_COMPILER=${{ runner.temp }}/llvm/bin/clang++ \
+            -DLLVM_DIR=${{ runner.temp }}/llvm/lib/cmake/llvm
+          cmake --build --preset tinyswift-debug
+      - uses: actions/upload-artifact@v4
+        with: { name: tinyswiftc-linux, path: "build/tinyswift-debug/bin/", retention-days: 7 }
