@@ -16,11 +16,14 @@ set(driver_sources_and_options
                 swift_parse_test_main.cpp)
 
 set(driver_common_libs
-                swiftAPIDigester
                 swiftDriver
                 swiftFrontendTool
-                swiftSymbolGraphGen
                 LLVMBitstreamReader)
+if(NOT TINYSWIFT_BUILD)
+  list(APPEND driver_common_libs
+    swiftAPIDigester
+    swiftSymbolGraphGen)
+endif()
 
 add_swift_host_library(swiftDriverTool STATIC
   ${driver_sources_and_options}

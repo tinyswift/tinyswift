@@ -1,0 +1,58 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "tinyswift-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "TINYSWIFT_BUILD": "ON",
+        "SWIFT_INCLUDE_DOCS": "OFF",
+        "SWIFT_BUILD_SOURCEKIT": "OFF",
+        "SWIFT_BUILD_SWIFT_SYNTAX": "OFF",
+        "SWIFT_ENABLE_DISPATCH": "OFF",
+        "SWIFT_BUILD_REMOTE_MIRROR": "OFF",
+        "SWIFT_BUILD_DYNAMIC_STDLIB": "OFF",
+        "SWIFT_BUILD_STATIC_STDLIB": "ON",
+        "LLVM_TARGETS_TO_BUILD": "AArch64;RISCV;X86;WebAssembly"
+      }
+    },
+    {
+      "name": "tinyswift-debug",
+      "displayName": "TinySwift Debug",
+      "description": "Development build with assertions and debug info",
+      "inherits": "tinyswift-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LLVM_ENABLE_ASSERTIONS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "SWIFT_INCLUDE_TESTS": "ON"
+      }
+    },
+    {
+      "name": "tinyswift-release",
+      "displayName": "TinySwift Release",
+      "description": "Optimized release build for distribution",
+      "inherits": "tinyswift-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LLVM_ENABLE_ASSERTIONS": "OFF",
+        "SWIFT_INCLUDE_TESTS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "tinyswift-debug", "configurePreset": "tinyswift-debug", "jobs": 8 },
+    { "name": "tinyswift-release", "configurePreset": "tinyswift-release", "jobs": 8 }
+  ],
+  "testPresets": [
+    {
+      "name": "tinyswift-debug-tests",
+      "configurePreset": "tinyswift-debug",
+      "output": { "outputOnFailure": true },
+      "filter": { "include": { "label": "tinyswift" } }
+    }
+  ]
+}

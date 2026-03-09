@@ -25,19 +25,22 @@ add_swift_host_library(swiftFrontend STATIC
 add_dependencies(swiftFrontend
   SwiftOptions)
 target_link_libraries(swiftFrontend PRIVATE
-  swiftAPIDigester
   swiftAST
-  swiftConstExtract
-  swiftIDE
   swiftSIL
   swiftOption
   swiftSILGen
   swiftSILOptimizer
   swiftIRGen
-  swiftLocalization
   swiftSema
-  swiftSerialization
-  swiftSymbolGraphGen)
+  swiftSerialization)
+if(NOT TINYSWIFT_BUILD)
+  target_link_libraries(swiftFrontend PRIVATE
+    swiftAPIDigester
+    swiftConstExtract
+    swiftIDE
+    swiftLocalization
+    swiftSymbolGraphGen)
+endif()
 
 if (SWIFT_BUILD_SWIFT_SYNTAX)
   target_link_libraries(swiftFrontend

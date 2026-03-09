@@ -166,7 +166,9 @@ target_link_libraries(swiftAST INTERFACE
   clangBasic)
 
 target_link_libraries(swiftAST
-  PUBLIC swiftBasic
-  PRIVATE swiftMarkup)
+  PUBLIC swiftBasic)
+if(NOT TINYSWIFT_BUILD)
+  target_link_libraries(swiftAST PRIVATE swiftMarkup)
+endif()
 
 set_swift_llvm_is_available(swiftAST)

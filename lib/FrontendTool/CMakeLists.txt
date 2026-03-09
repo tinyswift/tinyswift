@@ -10,21 +10,24 @@ target_link_libraries(swiftFrontendTool INTERFACE
   clangAPINotes
   clangBasic)
 target_link_libraries(swiftFrontendTool PRIVATE
-    swiftClangImporter
-    swiftConstExtract
     swiftDemangling
     swiftDependencyScan
     swiftFrontend
-    swiftImmediate
-    swiftIndex
     swiftIRGen
-    swiftMigrator
     swiftOption
-    swiftPrintAsClang
     swiftSerialization
     swiftSIL
     swiftSILGen
     swiftSILOptimizer
     swiftThreading)
+if(NOT TINYSWIFT_BUILD)
+  target_link_libraries(swiftFrontendTool PRIVATE
+    swiftClangImporter
+    swiftConstExtract
+    swiftImmediate
+    swiftIndex
+    swiftMigrator
+    swiftPrintAsClang)
+endif()
 
 set_swift_llvm_is_available(swiftFrontendTool)

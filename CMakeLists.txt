@@ -213,6 +213,18 @@ set(SWIFT_HOST_VARIANT_ARCH "${SWIFT_HOST_VARIANT_ARCH_default}" CACHE STRING
 # This is primarily to support building smaller or faster project files.
 #
 
+# ── TinySwift build options ──────────────────────────────────────────────────
+option(TINYSWIFT_BUILD "Build TinySwift (stripped-down embedded compiler)" OFF)
+
+if(TINYSWIFT_BUILD)
+  add_definitions(-DTINYSWIFT=1)
+  set(SWIFT_BUILD_SOURCEKIT OFF CACHE BOOL "" FORCE)
+  set(SWIFT_BUILD_SWIFT_SYNTAX OFF CACHE BOOL "" FORCE)
+  set(SWIFT_ENABLE_DISPATCH OFF CACHE BOOL "" FORCE)
+  set(SWIFT_BUILD_REMOTE_MIRROR OFF CACHE BOOL "" FORCE)
+endif()
+# ── End TinySwift options ────────────────────────────────────────────────────
+
 option(SWIFT_APPEND_VC_REV
   "Embed the version control system revision in Swift"
   TRUE)
