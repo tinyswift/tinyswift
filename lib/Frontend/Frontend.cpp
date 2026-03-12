@@ -310,13 +310,16 @@ bool CompilerInstance::setUpASTContextIfNeeded() {
 
   registerParseRequestFunctions(Context->evaluator);
   registerTypeCheckerRequestFunctions(Context->evaluator);
+#ifndef TINYSWIFT
   registerClangImporterRequestFunctions(Context->evaluator);
   registerConstExtractRequestFunctions(Context->evaluator);
+#endif
   registerSILGenRequestFunctions(Context->evaluator);
   registerSILOptimizerRequestFunctions(Context->evaluator);
   registerTBDGenRequestFunctions(Context->evaluator);
   registerIRGenRequestFunctions(Context->evaluator);
-  
+
+#ifndef TINYSWIFT
   // Migrator, indexing and typo correction need some IDE requests.
   // The integrated REPL needs IDE requests for completion.
   if (Invocation.getMigratorOptions().shouldRunMigrator() ||
@@ -326,6 +329,7 @@ bool CompilerInstance::setUpASTContextIfNeeded() {
           FrontendOptions::ActionType::REPL) {
     registerIDERequestFunctions(Context->evaluator);
   }
+#endif
 
   registerIRGenSILTransforms(*Context);
 
@@ -361,10 +365,12 @@ void CompilerInstance::setupStatsReporter() {
   };
 
   auto getClangSourceManager = [](ASTContext &Ctx) -> clang::SourceManager * {
+#ifndef TINYSWIFT
     if (auto *clangImporter = static_cast<ClangImporter *>(
             Ctx.getClangModuleLoader())) {
       return &clangImporter->getClangASTContext().getSourceManager();
     }
+#endif
     return nullptr;
   };
 
@@ -744,11 +750,13 @@ void CompilerInstance::setUpDiagnosticOptions() {
       Invocation.getDiagnosticOptions().DiagnosticDocumentationPath);
   Diagnostics.setLanguageVersion(
       Invocation.getLangOptions().EffectiveLanguageVersion);
+#ifndef TINYSWIFT
   if (!Invocation.getDiagnosticOptions().LocalizationCode.empty()) {
     Diagnostics.setLocalization(
         Invocation.getDiagnosticOptions().LocalizationCode,
         Invocation.getDiagnosticOptions().LocalizationPath);
   }
+#endif
 }
 
 // The ordering of ModuleLoaders is important!
@@ -812,6 +820,7 @@ bool CompilerInstance::setUpModuleLoaders() {
           IgnoreSourceInfoFile);
   }
 
+#ifndef TINYSWIFT
   // Wire up the Clang importer. If the user has specified an SDK, use it.
   // Otherwise, we just keep it around as our interface to Clang's ABI
   // knowledge.
@@ -829,6 +838,10 @@ bool CompilerInstance::setUpModuleLoaders() {
   std::string ModuleCachePath = CacheFromInvocation.empty()
                                     ? getModuleCachePathFromClang(Clang)
                                     : CacheFromInvocation.str();
+#else
+  auto CacheFromInvocation = getInvocation().getClangModuleCachePath();
+  std::string ModuleCachePath = CacheFromInvocation.str();
+#endif
   auto &FEOpts = Invocation.getFrontendOptions();
   ModuleInterfaceLoaderOptions LoaderOpts(FEOpts);
   Context->addModuleInterfaceChecker(
@@ -859,6 +872,7 @@ bool CompilerInstance::setUpModuleLoaders() {
     Context->addModuleLoader(std::move(ISML));
   }
 
+#ifndef TINYSWIFT
   Context->addModuleLoader(std::move(clangImporter), /*isClang*/ true);
 
   // When scanning for dependencies, we must add the scanner placeholder loader in order to
@@ -886,6 +900,7 @@ bool CompilerInstance::setUpModuleLoaders() {
             getInvocation().getFrontendOptions().ExplicitModulesOutputPath);
     Context->addModuleLoader(std::move(PSMS));
   }
+#endif
 
   return false;
 }
@@ -929,6 +944,7 @@ std::string CompilerInstance::getBridgingHeaderPath() const {
   if (!isPCHFilenameExtension(opts.ImplicitObjCHeaderPath))
     return opts.ImplicitObjCHeaderPath;
 
+#ifndef TINYSWIFT
   auto clangImporter =
       static_cast<ClangImporter *>(getASTContext().getClangModuleLoader());
 
@@ -937,6 +953,9 @@ std::string CompilerInstance::getBridgingHeaderPath() const {
     return std::string();
 
   return clangImporter->getOriginalSourceFile(opts.ImplicitObjCHeaderPath);
+#else
+  return std::string();
+#endif
 }
 
 bool CompilerInstance::setUpInputs() {

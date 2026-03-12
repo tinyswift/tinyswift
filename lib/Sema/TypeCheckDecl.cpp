@@ -52,9 +52,7 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
 #include "swift/Bridging/ASTGen.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Sema/IDETypeChecking.h"
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Strings.h"
@@ -2137,6 +2135,7 @@ ResultTypeRequest::evaluate(Evaluator &evaluator, ValueDecl *decl) const {
     resultTyRepr = cast<MacroDecl>(decl)->resultType.getTypeRepr();
   }
 
+#ifndef TINYSWIFT
   if (!resultTyRepr && decl->getClangDecl() &&
       isa<clang::FunctionDecl>(decl->getClangDecl())) {
     auto clangFn = cast<clang::FunctionDecl>(decl->getClangDecl());
@@ -2156,6 +2155,7 @@ ResultTypeRequest::evaluate(Evaluator &evaluator, ValueDecl *decl) const {
 
     return ctx.getNeverType();
   }
+#endif
 
   // Nothing to do if there's no result type.
   if (resultTyRepr == nullptr)
@@ -2492,12 +2492,14 @@ InterfaceTypeRequest::evaluate(Evaluator &eval, ValueDecl *D) const {
   case DeclKind::Var: {
     auto *VD = cast<VarDecl>(D);
 
+#ifndef TINYSWIFT
     if (auto clangDecl = VD->getClangDecl()) {
       auto clangVarDecl = cast<clang::VarDecl>(clangDecl);
 
       return VD->getASTContext().getClangModuleLoader()->importVarDeclType(
           clangVarDecl, VD, VD->getDeclContext());
     }
+#endif
 
     auto *namingPattern = VD->getNamingPattern();
     if (!namingPattern) {

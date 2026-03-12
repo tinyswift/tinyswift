@@ -19,10 +19,8 @@
 #include "swift/AST/PropertyWrappers.h"
 #include "swift/AST/SourceFile.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/SIL/SILLinkage.h"
 #include "swift/SIL/SILLocation.h"
 #include "swift/SILOptimizer/Utils/SpecializationMangler.h"
@@ -248,6 +246,9 @@ bool SILDeclRef::isThunk() const {
 }
 
 bool SILDeclRef::isClangImported() const {
+#ifdef TINYSWIFT
+  return false;
+#else
   if (!hasDecl())
     return false;
 
@@ -267,6 +268,7 @@ bool SILDeclRef::isClangImported() const {
         return !isForeign;
   }
   return false;
+#endif
 }
 
 bool SILDeclRef::isClangGenerated() const {
@@ -319,12 +321,14 @@ bool SILDeclRef::hasUserWrittenCode() const {
       return false;
     default:
       if (auto decl = getDecl()) {
+#ifndef TINYSWIFT
         // Declarations synthesized by ClangImporter by definition don't have
         // user written code, but despite that they aren't always marked
         // implicit.
         auto moduleContext = decl->getDeclContext()->getModuleScopeContext();
         if (isa<ClangModuleUnit>(moduleContext))
           return false;
+#endif
       }
       // TODO: This checking is currently conservative, we ought to
       // exhaustively handle all the cases here, and use emitOrDelayFunction
@@ -1159,6 +1163,7 @@ bool SILDeclRef::isBackDeploymentThunk() const {
          kind == Kind::Allocator;
 }
 
+#ifndef TINYSWIFT
 /// Use the Clang importer to mangle a Clang declaration.
 static void mangleClangDeclViaImporter(raw_ostream &buffer,
                                        const clang::NamedDecl *clangDecl,
@@ -1166,6 +1171,7 @@ static void mangleClangDeclViaImporter(raw_ostream &buffer,
   auto *importer = static_cast<ClangImporter *>(ctx.getClangModuleLoader());
   importer->getMangledName(buffer, clangDecl);
 }
+#endif
 
 static std::string mangleClangDecl(Decl *decl, bool isForeign) {
   auto clangDecl = decl->getClangDecl();
@@ -1175,13 +1181,16 @@ static std::string mangleClangDecl(Decl *decl, bool isForeign) {
       std::string s(1, '\01');
       s += asmLabel->getLabel();
       return s;
-    } else if (namedClangDecl->hasAttr<clang::OverloadableAttr>() ||
+    }
+#ifndef TINYSWIFT
+    else if (namedClangDecl->hasAttr<clang::OverloadableAttr>() ||
                decl->getASTContext().LangOpts.EnableCXXInterop) {
       std::string storage;
       llvm::raw_string_ostream SS(storage);
       mangleClangDeclViaImporter(SS, namedClangDecl, decl->getASTContext());
       return SS.str();
     }
+#endif
     return namedClangDecl->getName().str();
   } else if (auto objcDecl = dyn_cast<clang::ObjCMethodDecl>(clangDecl)) {
     if (objcDecl->isDirectMethod() && isForeign) {

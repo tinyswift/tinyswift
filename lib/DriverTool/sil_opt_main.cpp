@@ -36,9 +36,7 @@
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Serialization/SerializedSILLoader.h"
 #include "swift/Subsystems.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
-#endif
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -1057,9 +1055,12 @@ int sil_opt_main(ArrayRef<const char *> argv, void *MainAddr) {
     serializationOpts.SerializeAllSIL = options.EmitSIB;
     serializationOpts.IsSIB = options.EmitSIB;
 
+#ifndef TINYSWIFT
     symbolgraphgen::SymbolGraphOptions symbolGraphOptions;
-
     serialize(CI.getMainModule(), serializationOpts, symbolGraphOptions, SILMod.get());
+#else
+    serialize(CI.getMainModule(), serializationOpts, CI.getASTContext().SymbolGraphOpts, SILMod.get());
+#endif
   } else {
     const StringRef OutputFile = options.OutputFilename.size() ?
                                    StringRef(options.OutputFilename) : "-";

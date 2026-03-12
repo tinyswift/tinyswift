@@ -60,9 +60,7 @@
 #include "swift/AST/ProtocolConformance.h"
 #include "swift/AST/SubstitutionMap.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/SIL/FormalLinkage.h"
 #include "swift/Serialization/SerializedSILLoader.h"
 #include <functional>

@@ -31,9 +31,7 @@
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Statistic.h"
-#ifndef TINYSWIFT
 #include "swift/IDE/TypeCheckCompletionCallback.h"
-#endif
 #include "swift/Sema/ConstraintSystem.h"
 #include "swift/Sema/SolutionResult.h"
 #include "llvm/ADT/DenseMap.h"
@@ -426,6 +424,7 @@ TypeChecker::typeCheckTarget(SyntacticElementTarget &target,
   if (ConstraintSystem::preCheckTarget(target))
     return errorResult();
 
+#ifndef TINYSWIFT
   // Check whether given target has a code completion token which requires
   // special handling. Returns true if handled, in which case we've already
   // type-checked it for completion, and don't need the solution applied.
@@ -435,6 +434,7 @@ TypeChecker::typeCheckTarget(SyntacticElementTarget &target,
                                    Context.CompletionCallback->sawSolution(S);
                                  }))
     return std::nullopt;
+#endif
 
   // Construct a constraint system from this expression.
   ConstraintSystemOptions csOptions = ConstraintSystemFlags::AllowFixes;

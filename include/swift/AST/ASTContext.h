@@ -33,9 +33,7 @@
 #include "swift/Basic/Located.h"
 #include "swift/Basic/Malloc.h"
 #include "swift/Serialization/SerializationOptions.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
-#endif
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/DarwinSDKInfo.h"
 #include "llvm/ADT/ArrayRef.h"

@@ -13,9 +13,7 @@
 #ifndef SWIFT_AST_COMMENT_H
 #define SWIFT_AST_COMMENT_H
 
-#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
-#endif
 #include <optional>
 
 namespace swift {
@@ -23,6 +21,7 @@ class Decl;
 class TypeDecl;
 struct RawComment;
 
+#ifndef TINYSWIFT
 class DocComment {
   const Decl *D;
   swift::markup::Document *Doc = nullptr;
@@ -105,6 +104,7 @@ extractCommentParts(swift::markup::MarkupContext &MC,
 
 /// Extract brief comment from \p RC, and print it to \p OS .
 void printBriefComment(RawComment RC, llvm::raw_ostream &OS);
+#endif // TINYSWIFT
 
 /// Describes the intended serialization target for a doc comment.
 enum class DocCommentSerializationTarget : uint8_t {

@@ -819,6 +819,7 @@ bool swift::emitLoadedModuleTraceIfNeeded(ModuleDecl *mainModule,
   return false;
 }
 
+#ifndef TINYSWIFT
 class ObjcMethodReferenceCollector: public SourceEntityWalker {
   unsigned CurrentFileID;
   llvm::DenseMap<const clang::ObjCMethodDecl*, unsigned> results;
@@ -858,15 +859,10 @@ static void createFineModuleTraceFile(CompilerInstance &instance,
                                       const InputFile &input) {
   StringRef tracePath = input.getFineModuleTracePath();
   if (tracePath.empty()) {
-    // we basically rely on the passing down of module trace file path
-    // as an indicator that this job needs to emit an ObjC message trace file.
-    // FIXME: add a separate swift-frontend flag for ObjC message trace path
-    // specifically.
     return;
   }
   ModuleDecl *MD = instance.getMainModule();
   auto &ctx = MD->getASTContext();
-  // Write output via atomic append.
   llvm::vfs::OutputConfig config;
   config.setAppend().setAtomicWrite();
   auto outputFile = ctx.getOutputBackend().createFile(tracePath, config);
@@ -888,7 +884,6 @@ static void createFineModuleTraceFile(CompilerInstance &instance,
     });
   }
 
-  // print this json line.
   std::string stringBuffer;
   {
     llvm::raw_string_ostream memoryBuffer(stringBuffer);
@@ -896,7 +891,6 @@ static void createFineModuleTraceFile(CompilerInstance &instance,
   }
   stringBuffer += "\n";
 
-  // Write output via atomic append.
   *outputFile << stringBuffer;
   if (auto err = outputFile->keep()) {
     ctx.Diags.diagnose(SourceLoc(), diag::error_opening_output,
@@ -904,6 +898,7 @@ static void createFineModuleTraceFile(CompilerInstance &instance,
     return;
   }
 }
+#endif
 
 bool swift::emitFineModuleTraceIfNeeded(CompilerInstance &Instance,
                                         const FrontendOptions &opts) {
@@ -912,9 +907,11 @@ bool swift::emitFineModuleTraceIfNeeded(CompilerInstance &Instance,
   assert(!ctxt.hadError() &&
          "We should've already exited earlier if there was an error.");
 
+#ifndef TINYSWIFT
   opts.InputsAndOutputs.forEachInput([&](const InputFile &input) {
     createFineModuleTraceFile(Instance, input);
     return true;
   });
+#endif
   return false;
 }

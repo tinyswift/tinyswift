@@ -56,10 +56,8 @@
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/StringExtras.h"
 #include "swift/Basic/TypeID.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/Parse/Lexer.h" // FIXME: Bad dependency
 #include "clang/Lex/MacroInfo.h"
@@ -1060,8 +1058,10 @@ bool Decl::preconcurrency() const {
     return true;
 
   // Imported C declarations always predate concurrency.
+#ifndef TINYSWIFT
   if (isa<ClangModuleUnit>(getDeclContext()->getModuleScopeContext()))
     return true;
+#endif
 
   // Variables declared in top-level code are @_predatesConcurrency
   if (const VarDecl *var = dyn_cast<VarDecl>(this)) {
@@ -9658,8 +9658,10 @@ bool IsFunctionBodySkippedRequest::evaluate(
 
   // Functions that have been synthesized for clang modules will be serialized
   // because they have shared linkage.
+#ifndef TINYSWIFT
   if (isa<ClangModuleUnit>(afd->getDeclContext()->getModuleScopeContext()))
     return false;
+#endif
 
   if (auto *accessor = dyn_cast<AccessorDecl>(afd)) {
     // didSet accessors needs to be checked to determine whether to keep their

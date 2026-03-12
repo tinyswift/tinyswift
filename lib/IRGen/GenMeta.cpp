@@ -30,9 +30,7 @@
 #include "swift/AST/SubstitutionMap.h"
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/IRGen/Linking.h"
 #include "swift/SIL/FormalLinkage.h"
 #include "swift/SIL/SILModule.h"
@@ -740,7 +738,11 @@ namespace {
       // binary that uses the Clang module. Otherwise, we can guarantee that
       // an extension (and any of its possible sub-contexts) belong to one
       // translation unit.
+#ifndef TINYSWIFT
       return !isa<ClangModuleUnit>(E->getModuleScopeContext());
+#else
+      return true;
+#endif
     }
     
     ContextDescriptorKind getContextKind() {
@@ -1570,7 +1572,11 @@ namespace {
     }
       
     bool isUniqueDescriptor() {
+#ifndef TINYSWIFT
       return !isa<ClangModuleUnit>(Type->getModuleScopeContext());
+#else
+      return true;
+#endif
     }
     
     llvm::Constant *emit() {
@@ -6841,8 +6847,12 @@ bool irgen::requiresForeignTypeMetadata(NominalTypeDecl *decl) {
     llvm_unreachable("bad foreign class kind");
   }
 
+#ifndef TINYSWIFT
   return isa<ClangModuleUnit>(decl->getModuleScopeContext()) &&
     !isa<ProtocolDecl>(decl);
+#else
+  return false;
+#endif
 }
 
 void irgen::emitForeignTypeMetadata(IRGenModule &IGM, NominalTypeDecl *decl) {
@@ -6874,7 +6884,9 @@ void irgen::emitForeignTypeMetadata(IRGenModule &IGM, NominalTypeDecl *decl) {
       builder.createMetadataAccessFunction();
     }
   } else if (auto structDecl = dyn_cast<StructDecl>(decl)) {
+#ifndef TINYSWIFT
     assert(isa<ClangModuleUnit>(structDecl->getModuleScopeContext()));
+#endif
 
     ForeignStructMetadataBuilder builder(IGM, structDecl, init);
     builder.layout();

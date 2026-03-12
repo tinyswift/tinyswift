@@ -548,6 +548,7 @@ ModuleImplicitImportsRequest::evaluate(Evaluator &evaluator,
   auto *clangImporter =
       static_cast<ClangImporter *>(ctx.getClangModuleLoader());
 
+#ifndef TINYSWIFT
   // Implicitly import the bridging header module if needed.
   auto bridgingHeaderPath = importInfo.BridgingHeaderPath;
   if (!bridgingHeaderPath.empty() &&
@@ -557,6 +558,7 @@ ModuleImplicitImportsRequest::evaluate(Evaluator &evaluator,
     imports.emplace_back(
         ImportedModule(headerModule), SourceLoc(), ImportFlags::Exported);
   }
+#endif
 
   // Implicitly import the underlying Clang half of this module if needed.
   if (importInfo.ShouldImportUnderlyingModule) {

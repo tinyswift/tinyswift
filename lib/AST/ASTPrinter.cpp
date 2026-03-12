@@ -51,9 +51,7 @@
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/StringExtras.h"
 #include "swift/Basic/Unicode.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
-#endif
 #include "swift/Config.h"
 #include "swift/Parse/Lexer.h"
 #include "swift/Strings.h"
@@ -2646,6 +2644,7 @@ void PrintAST::printAccessors(const AbstractStorageDecl *ASD) {
   indent();
 }
 
+#ifndef TINYSWIFT
 // This provides logic for looking up all members of a namespace. This is
 // intentionally implemented only in the printer and should *only* be used for
 // debugging, testing, generating module dumps, etc. (In other words, if you're
@@ -2720,6 +2719,7 @@ static void addNamespaceMembers(Decl *decl,
     }
   }
 }
+#endif // TINYSWIFT
 
 void PrintAST::printMembersOfDecl(Decl *D, bool needComma, bool openBracket,
                                   bool closeBracket, bool doIndent) {
@@ -2752,8 +2752,10 @@ void PrintAST::printMembersOfDecl(Decl *D, bool needComma, bool openBracket,
         }
       }
     }
+#ifndef TINYSWIFT
     if (isa_and_nonnull<clang::NamespaceDecl>(D->getClangDecl()))
       addNamespaceMembers(D, Members);
+#endif
   }
   printMembers(Members, needComma, openBracket, closeBracket, doIndent);
 }

@@ -40,10 +40,8 @@
 #include "swift/Basic/Compiler.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Version.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/SIL/SILArgument.h"
 #include "swift/SIL/SILBasicBlock.h"
@@ -128,6 +126,7 @@ static bool equalWithoutExistentialTypes(Type t1, Type t2) {
       ->isEqual(withoutExistentialTypes(t2));
 }
 
+#ifndef TINYSWIFT
 class IRGenDebugInfoImpl : public IRGenDebugInfo {
   const IRGenOptions &Opts;
   ClangImporter &CI;
@@ -3777,8 +3776,10 @@ void IRGenDebugInfoImpl::emitPackCountParameter(IRGenFunction &IGF,
       IGF.isAsync() ? CoroDirectValue : DirectValue, ArtificialValue);
 }
 
+#endif // !TINYSWIFT (IRGenDebugInfoImpl)
 } // anonymous namespace
 
+#ifndef TINYSWIFT
 std::unique_ptr<IRGenDebugInfo> IRGenDebugInfo::createIRGenDebugInfo(
     const IRGenOptions &Opts, ClangImporter &CI, IRGenModule &IGM,
     llvm::Module &M, StringRef MainOutputFilenameForDebugInfo,
@@ -3786,9 +3787,18 @@ std::unique_ptr<IRGenDebugInfo> IRGenDebugInfo::createIRGenDebugInfo(
   return std::make_unique<IRGenDebugInfoImpl>(
       Opts, CI, IGM, M, MainOutputFilenameForDebugInfo, PrivateDiscriminator);
 }
+#else
+std::unique_ptr<IRGenDebugInfo> IRGenDebugInfo::createIRGenDebugInfo(
+    const IRGenOptions &Opts, ClangImporter &CI, IRGenModule &IGM,
+    llvm::Module &M, StringRef MainOutputFilenameForDebugInfo,
+    StringRef PrivateDiscriminator) {
+  return nullptr;
+}
+#endif // !TINYSWIFT
 
 IRGenDebugInfo::~IRGenDebugInfo() {}
 
+#ifndef TINYSWIFT
 // Forwarding to the private implementation.
 void IRGenDebugInfo::finalize() {
   static_cast<IRGenDebugInfoImpl *>(this)->finalize();
@@ -3948,3 +3958,74 @@ PrologueLocation::PrologueLocation(IRGenDebugInfo *DI, IRBuilder &Builder)
   if (DI)
     DI->clearLoc(Builder);
 }
+#else
+// TINYSWIFT stubs for IRGenDebugInfo forwarding methods.
+void IRGenDebugInfo::finalize() {}
+void IRGenDebugInfo::setCurrentLoc(IRBuilder &Builder, const SILDebugScope *DS,
+                                   SILLocation Loc) {}
+void IRGenDebugInfo::addFailureMessageToCurrentLoc(IRBuilder &Builder,
+                                                   StringRef failureMsg) {}
+void IRGenDebugInfo::clearLoc(IRBuilder &Builder) {}
+void IRGenDebugInfo::pushLoc() {}
+void IRGenDebugInfo::popLoc() {}
+void IRGenDebugInfo::setInlinedTrapLocation(IRBuilder &Builder,
+                                            const SILDebugScope *Scope) {}
+void IRGenDebugInfo::setEntryPointLoc(IRBuilder &Builder) {}
+llvm::DIScope *IRGenDebugInfo::getEntryPointFn() { return nullptr; }
+llvm::DIScope *IRGenDebugInfo::getOrCreateScope(const SILDebugScope *DS) {
+  return nullptr;
+}
+void IRGenDebugInfo::emitImport(ImportDecl *D) {}
+llvm::DISubprogram *
+IRGenDebugInfo::emitFunction(const SILDebugScope *DS, llvm::Function *Fn,
+                             SILFunctionTypeRepresentation Rep, SILType Ty,
+                             DeclContext *DeclCtx, GenericEnvironment *GE) {
+  return nullptr;
+}
+llvm::DISubprogram *IRGenDebugInfo::emitFunction(SILFunction &SILFn,
+                                                 llvm::Function *Fn) {
+  return nullptr;
+}
+void IRGenDebugInfo::emitArtificialFunction(IRBuilder &Builder,
+                                            llvm::Function *Fn,
+                                            SILType SILTy) {}
+void IRGenDebugInfo::emitOutlinedFunction(IRBuilder &Builder,
+                                          llvm::Function *Fn,
+                                          StringRef name) {}
+void IRGenDebugInfo::emitVariableDeclaration(
+    IRBuilder &Builder, ArrayRef<llvm::Value *> Storage, DebugTypeInfo Ty,
+    const SILDebugScope *DS, std::optional<SILLocation> VarLoc,
+    SILDebugVariable VarInfo, IndirectionKind Indirection,
+    ArtificialKind Artificial, AddrDbgInstrKind AddrDInstKind) {}
+void IRGenDebugInfo::emitDbgIntrinsic(IRBuilder &Builder, llvm::Value *Storage,
+                                      llvm::DILocalVariable *Var,
+                                      llvm::DIExpression *Expr, unsigned Line,
+                                      unsigned Col, llvm::DILocalScope *Scope,
+                                      const SILDebugScope *DS,
+                                      bool InCoroContext,
+                                      AddrDbgInstrKind AddrDInstKind) {}
+void IRGenDebugInfo::emitGlobalVariableDeclaration(
+    llvm::GlobalVariable *Storage, StringRef Name, StringRef LinkageName,
+    DebugTypeInfo DebugType, bool IsLocalToUnit,
+    std::optional<SILLocation> Loc) {}
+void IRGenDebugInfo::emitTypeMetadata(IRGenFunction &IGF, llvm::Value *Metadata,
+                                      unsigned Depth, unsigned Index,
+                                      StringRef Name) {}
+void IRGenDebugInfo::emitPackCountParameter(IRGenFunction &IGF,
+                                            llvm::Value *Metadata,
+                                            SILDebugVariable VarInfo) {}
+llvm::DIBuilder &IRGenDebugInfo::getBuilder() {
+  llvm_unreachable("no debug info in TINYSWIFT");
+}
+
+AutoRestoreLocation::AutoRestoreLocation(IRGenDebugInfo *DI, IRBuilder &Builder)
+    : DI(DI), Builder(Builder) {}
+AutoRestoreLocation::~AutoRestoreLocation() {}
+
+ArtificialLocation::ArtificialLocation(const SILDebugScope *DS,
+                                       IRGenDebugInfo *DI, IRBuilder &Builder)
+    : AutoRestoreLocation(DI, Builder) {}
+
+PrologueLocation::PrologueLocation(IRGenDebugInfo *DI, IRBuilder &Builder)
+    : AutoRestoreLocation(DI, Builder) {}
+#endif // !TINYSWIFT

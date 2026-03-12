@@ -50,9 +50,7 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
 #include "swift/Basic/Statistic.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/TinyPtrVector.h"
 
@@ -460,6 +458,7 @@ static ResolveWitnessResult resolveTypeWitnessViaLookup(
   auto *dc = conformance->getDeclContext();
   auto &ctx = dc->getASTContext();
 
+#ifndef TINYSWIFT
   // Conformances constructed by the ClangImporter should have explicit type
   // witnesses already.
   if (isa<ClangModuleUnit>(dc->getModuleScopeContext())) {
@@ -468,6 +467,7 @@ static ResolveWitnessResult resolveTypeWitnessViaLookup(
     assocType->dump(llvm::errs());
     abort();
   }
+#endif
 
   NLOptions subOptions = (NL_QualifiedDefault | NL_OnlyTypes |
                           NL_ProtocolMembers | NL_IncludeAttributeImplements);
@@ -1619,6 +1619,7 @@ InferredAssociatedTypesByWitnesses
 AssociatedTypeInference::getPotentialTypeWitnessesFromRequirement(
                     const llvm::SetVector<AssociatedTypeDecl *> &allUnresolved,
                     ValueDecl *req) {
+#ifndef TINYSWIFT
   // Conformances constructed by the ClangImporter should have explicit type
   // witnesses already.
   if (isa<ClangModuleUnit>(conformance->getDeclContext()->getModuleScopeContext())) {
@@ -1628,6 +1629,7 @@ AssociatedTypeInference::getPotentialTypeWitnessesFromRequirement(
       assocTypeDecl->dump(llvm::errs());
     abort();
   }
+#endif
 
   TypeReprCycleCheckWalker cycleCheck(dc->getASTContext(), allUnresolved);
 

@@ -200,6 +200,9 @@ private:
 /// Returns the USR of the given declaration. Gracefully returns an empty
 /// string if D is null or invalid.
 std::string declUSR(const Decl *D) {
+#ifdef TINYSWIFT
+  return "";
+#else
   if (!D)
     return "";
 
@@ -222,11 +225,15 @@ std::string declUSR(const Decl *D) {
   if (swift::ide::printDeclUSR(D, os))
     return "";
   return usr;
+#endif
 }
 
 /// Returns the USR of the given type. Gracefully returns an empty string
 /// if the type is invalid.
 std::string typeUSR(Type type) {
+#ifdef TINYSWIFT
+  return "";
+#else
   if (!type)
     return "";
 
@@ -246,11 +253,15 @@ std::string typeUSR(Type type) {
   if (swift::ide::printTypeUSR(type, os))
     return "";
   return usr;
+#endif
 }
 
 /// Returns the USR of the given value declaration's type. Gracefully returns
 /// the empty string if D is null.
 std::string declTypeUSR(const ValueDecl *D) {
+#ifdef TINYSWIFT
+  return "";
+#else
   if (!D)
     return "";
 
@@ -259,6 +270,7 @@ std::string declTypeUSR(const ValueDecl *D) {
   if (swift::ide::printDeclTypeUSR(D, os))
     return "";
   return usr;
+#endif
 }
 
 } // end anonymous namespace

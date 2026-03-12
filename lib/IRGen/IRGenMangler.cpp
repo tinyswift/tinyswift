@@ -22,9 +22,7 @@
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/Demangling/Demangle.h"
 #include "swift/ABI/MetadataValues.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "llvm/Support/SaveAndRestore.h"
 
 using namespace swift;

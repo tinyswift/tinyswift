@@ -29,9 +29,7 @@
 #include "swift/Basic/Defer.h"
 #include "swift/Basic/PrimitiveParsing.h"
 #include "swift/Basic/SourceManager.h"
-#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
-#endif
 #include "swift/Parse/Lexer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"

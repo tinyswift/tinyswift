@@ -19,9 +19,7 @@
 #include "swift/AST/GenericEnvironment.h"
 #include "swift/AST/ProtocolConformance.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/SIL/FormalLinkage.h"
 #include "swift/SIL/Notifications.h"
 #include "swift/SIL/SILDebugScope.h"
@@ -844,12 +842,14 @@ shouldSerializeEntitiesAssociatedWithDeclContext(const DeclContext *DC) const {
     return true;
   }
   
+#ifndef TINYSWIFT
   // Serialize entities associated with clang modules, since other entities
   // may depend on them, and someone who deserializes those entities may not
   // have their own copy.
   if (isa<ClangModuleUnit>(DC->getModuleScopeContext())) {
     return true;
   }
+#endif
   
   return false;
 }

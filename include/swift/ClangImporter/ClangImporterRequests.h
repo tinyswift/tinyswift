@@ -553,6 +553,7 @@ template<typename Request>
 void reportEvaluatedRequest(UnifiedStatsReporter &stats,
                             const Request &request);
 
+#ifndef TINYSWIFT
 #define SWIFT_REQUEST(Zone, RequestType, Sig, Caching, LocOptions)             \
   template <>                                                                  \
   inline void reportEvaluatedRequest(UnifiedStatsReporter &stats,              \
@@ -561,6 +562,7 @@ void reportEvaluatedRequest(UnifiedStatsReporter &stats,
   }
 #include "swift/ClangImporter/ClangImporterTypeIDZone.def"
 #undef SWIFT_REQUEST
+#endif
 
 } // end namespace swift
 

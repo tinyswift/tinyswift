@@ -24,9 +24,7 @@
 #include "swift/AST/ParameterList.h"
 #include "swift/AST/ProtocolConformance.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -36,11 +34,13 @@ using namespace swift;
 FormalLinkage swift::getDeclLinkage(const ValueDecl *D) {
   const DeclContext *fileContext = D->getDeclContext()->getModuleScopeContext();
 
+#ifndef TINYSWIFT
   // Clang declarations are public and can't be assured of having a
   // unique defining location.
   if (isa<ClangModuleUnit>(fileContext) &&
           !D->getObjCImplementationDecl())
     return FormalLinkage::PublicNonUnique;
+#endif
 
   switch (D->getEffectiveAccess()) {
   case AccessLevel::Package:

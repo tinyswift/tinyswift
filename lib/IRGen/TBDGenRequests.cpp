@@ -15,9 +15,7 @@
 #include "swift/AST/Evaluator.h"
 #include "swift/AST/FileUnit.h"
 #include "swift/AST/Module.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
-#endif
 #include "swift/IRGen/TBDGen.h"
 #include "swift/Subsystems.h"
 #include "clang/Basic/TargetInfo.h"
@@ -50,11 +48,17 @@ ModuleDecl *TBDGenDescriptor::getParentModule() const {
   return Input.get<FileUnit *>()->getParentModule();
 }
 
+#ifndef TINYSWIFT
 const StringRef TBDGenDescriptor::getDataLayoutString() const {
   auto &ctx = getParentModule()->getASTContext();
   auto *clang = static_cast<ClangImporter *>(ctx.getClangModuleLoader());
   return llvm::StringRef(clang->getTargetInfo().getDataLayoutString());
 }
+#else
+const StringRef TBDGenDescriptor::getDataLayoutString() const {
+  return llvm::StringRef();
+}
+#endif
 
 const llvm::Triple &TBDGenDescriptor::getTarget() const {
   return getParentModule()->getASTContext().LangOpts.Target;

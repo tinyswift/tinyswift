@@ -39,10 +39,8 @@
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Parse/Lexer.h"
 #include "swift/Strings.h"
 #include "clang/AST/DeclObjC.h"
@@ -1726,11 +1724,13 @@ SmallVector<MacroDecl *, 1> namelookup::lookupMacros(DeclContext *dc,
 
     // When resolving macro names for imported entities, we look for any
     // loaded module.
+#ifndef TINYSWIFT
     if (!moduleDecl && isa<ClangModuleUnit>(moduleScopeDC) &&
         ctx.LangOpts.hasFeature(Feature::MacrosOnImports)) {
       moduleDecl = ctx.getLoadedModule(moduleName.getBaseIdentifier());
       moduleScopeDC = moduleDecl;
     }
+#endif
 
     if (!moduleDecl)
       return {};
@@ -2135,6 +2135,7 @@ DirectLookupRequest::evaluate(Evaluator &evaluator,
   if (!Table.isLazilyComplete(name.getBaseName())) {
     DeclBaseName baseName(name.getBaseName());
 
+#ifndef TINYSWIFT
     if (isa_and_nonnull<clang::NamespaceDecl>(decl->getClangDecl())) {
       auto allFound = evaluateOrDefault(
           ctx.evaluator, CXXNamespaceMemberLookup({cast<EnumDecl>(decl), name}),
@@ -2169,7 +2170,9 @@ DirectLookupRequest::evaluate(Evaluator &evaluator,
         Table.addMember(found);
 
       populateLookupTableEntryFromExtensions(ctx, Table, baseName, decl);
-    } else {
+    } else
+#endif
+    {
       // The lookup table believes it doesn't have a complete accounting of this
       // name - either because we're never seen it before, or another extension
       // was registered since the last time we searched. Ask the loaders to give

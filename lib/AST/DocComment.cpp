@@ -25,13 +25,12 @@
 #include "swift/AST/PrettyStackTrace.h"
 #include "swift/AST/RawComment.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
-#endif
 #include <queue>
 
 using namespace swift;
 
+#ifndef TINYSWIFT
 void *DocComment::operator new(size_t Bytes, swift::markup::MarkupContext &MC,
                                unsigned Alignment) {
   return MC.allocate(Bytes, Alignment);
@@ -393,6 +392,7 @@ DocComment *swift::getSingleDocComment(swift::markup::MarkupContext &MC,
     return nullptr;
   return DocComment::create(D, MC, RC);
 }
+#endif // TINYSWIFT
 
 const Decl *Decl::getDocCommentProvidingDecl() const {
   return evaluateOrDefault(getASTContext().evaluator,

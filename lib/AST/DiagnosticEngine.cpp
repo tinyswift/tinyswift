@@ -34,9 +34,7 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Config.h"
-#ifndef TINYSWIFT
 #include "swift/Localization/LocalizationFormat.h"
-#endif
 #include "swift/Parse/Lexer.h" // bad dependency
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -1535,9 +1533,11 @@ DiagnosticKind DiagnosticEngine::declaredDiagnosticKindFor(const DiagID id) {
 
 llvm::StringRef DiagnosticEngine::diagnosticStringFor(DiagID id) {
   llvm::StringRef message = diagnosticStrings[(unsigned)id];
+#ifndef TINYSWIFT
   if (auto localizationProducer = localization.get()) {
     message = localizationProducer->getMessageOr(id, message);
   }
+#endif
   return message;
 }
 

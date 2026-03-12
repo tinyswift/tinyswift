@@ -11,17 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "swift/Serialization/Serialization.h"
-#ifndef TINYSWIFT
 #include "swift/APIDigester/ModuleAnalyzerNodes.h"
-#endif
 #include "swift/AST/DiagnosticsFrontend.h"
 #include "swift/AST/FileSystem.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Subsystems.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphGen.h"
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
-#endif
 #include "llvm/Support/SmallVectorMemoryBuffer.h"
 #include "llvm/Support/VirtualOutputBackend.h"
 
@@ -37,6 +33,7 @@ static ASTContext &getContext(ModuleOrSourceFile DC) {
   return getModule(DC)->getASTContext();
 }
 
+#ifndef TINYSWIFT
 static void emitABIDescriptor(ModuleOrSourceFile DC,
                               const SerializationOptions &options) {
   using namespace swift::ide::api;
@@ -63,6 +60,7 @@ static void emitABIDescriptor(ModuleOrSourceFile DC,
     }
   }
 }
+#endif
 
 void swift::serializeToBuffers(
     ModuleOrSourceFile DC, const SerializationOptions &options,
@@ -90,7 +88,9 @@ void swift::serializeToBuffers(
     if (hadError)
       return;
 
+#ifndef TINYSWIFT
     emitABIDescriptor(DC, options);
+#endif
     if (moduleBuffer)
       *moduleBuffer = std::make_unique<llvm::SmallVectorMemoryBuffer>(
           std::move(buf), options.OutputPath,
@@ -181,6 +181,7 @@ void swift::serialize(
         });
   }
 
+#ifndef TINYSWIFT
   if (!symbolGraphOptions.OutputDir.empty()) {
     if (DC.is<ModuleDecl *>()) {
       auto *M = DC.get<ModuleDecl *>();
@@ -190,4 +191,5 @@ void swift::serialize(
     }
   }
   emitABIDescriptor(DC, options);
+#endif
 }

@@ -48,19 +48,17 @@
 #include "swift/Basic/PathRemapper.h"
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/Version.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
 #include "swift/ClangImporter/ClangModule.h"
 #include "swift/ClangImporter/SwiftAbstractBasicWriter.h"
-#endif
-#include "swift/Demangling/ManglingMacros.h"
-#include "swift/Serialization/Serialization.h"
-#include "swift/Serialization/SerializationOptions.h"
-#include "swift/Strings.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Index/USRGeneration.h"
 #include "clang/Serialization/ASTReader.h"
+#include "swift/Demangling/ManglingMacros.h"
+#include "swift/Serialization/Serialization.h"
+#include "swift/Serialization/SerializationOptions.h"
+#include "swift/Strings.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -669,6 +667,7 @@ serialization::TypeID Serializer::addTypeRef(Type ty) {
 serialization::ClangTypeID Serializer::addClangTypeRef(const clang::Type *ty) {
   if (!ty) return 0;
 
+#ifndef TINYSWIFT
   // Try to serialize the non-canonical type, but fall back to the
   // canonical type if necessary.
   auto loader = getASTContext().getClangModuleLoader();
@@ -688,6 +687,9 @@ serialization::ClangTypeID Serializer::addClangTypeRef(const clang::Type *ty) {
   }
 
   return ClangTypesToSerialize.addRef(ty);
+#else
+  return 0;
+#endif
 }
 
 IdentifierID Serializer::addDeclBaseNameRef(DeclBaseName ident) {
@@ -1403,6 +1405,7 @@ void Serializer::writeInputBlock() {
   ImportSet internalOrBelowImportSet =
       getImportsAsSet(M, ModuleDecl::ImportFilterKind::InternalOrBelow);
 
+#ifndef TINYSWIFT
   auto clangImporter =
     static_cast<ClangImporter *>(M->getASTContext().getClangModuleLoader());
   ModuleDecl *bridgingHeaderModule = clangImporter->getImportedHeaderModule();
@@ -1447,6 +1450,11 @@ void Serializer::writeInputBlock() {
       ImportedHeaderContents.emit(ScratchRecord, contents);
     }
   }
+#else
+  ModuleDecl *bridgingHeaderModule = nullptr;
+  ImportedModule bridgingHeaderImport{ImportPath::Access(),
+                                      bridgingHeaderModule};
+#endif
 
   ModuleDecl *theBuiltinModule = M->getASTContext().TheBuiltinModule;
   for (auto import : allLocalImports) {
@@ -1961,8 +1969,11 @@ Serializer::writeASTBlockEntity(ProtocolConformance *conformance) {
   case ProtocolConformanceKind::Normal: {
     auto normal = cast<NormalProtocolConformance>(conformance);
     if (!isDeclXRef(normal->getDeclContext()->getAsDecl())
+#ifndef TINYSWIFT
         && !isa<ClangModuleUnit>(normal->getDeclContext()
-                                       ->getModuleScopeContext())) {
+                                       ->getModuleScopeContext())
+#endif
+        ) {
         writeLocalNormalProtocolConformance(normal);
     } else {
       // A conformance in a different module file.
@@ -2176,6 +2187,7 @@ getStableClangDeclPathComponentKind(
   llvm_unreachable("bad kind");
 }
 
+#ifndef TINYSWIFT
 static Identifier getClangTemplateSpecializationXRefDiscriminator(
     ASTContext &ctx, Identifier &name,
     const clang::ClassTemplateSpecializationDecl *ctsd) {
@@ -2191,6 +2203,7 @@ static Identifier getClangTemplateSpecializationXRefDiscriminator(
   clang::index::generateUSRForDecl(ctsd, buffer);
   return ctx.getIdentifier(buffer.str());
 }
+#endif
 
 void Serializer::writeCrossReference(const DeclContext *DC, uint32_t pathLen) {
   using namespace decls_block;
@@ -2249,6 +2262,7 @@ void Serializer::writeCrossReference(const DeclContext *DC, uint32_t pathLen) {
     bool isProtocolExt = DC->getParent()->getExtendedProtocolDecl();
 
     Identifier name = generic->getName();
+#ifndef TINYSWIFT
     if (generic->hasClangNode()) {
       if (auto *ctsd = dyn_cast_or_null<clang::ClassTemplateSpecializationDecl>(
               generic->getClangDecl())) {
@@ -2257,6 +2271,7 @@ void Serializer::writeCrossReference(const DeclContext *DC, uint32_t pathLen) {
             getASTContext(), name, ctsd);
       }
     }
+#endif
     XRefTypePathPieceLayout::emitRecord(Out, ScratchRecord, abbrCode,
                                         addDeclBaseNameRef(name),
                                         addDeclBaseNameRef(discriminator),
@@ -2431,6 +2446,7 @@ void Serializer::writeCrossReference(const Decl *D) {
     }
 
     Identifier name = type->getName();
+#ifndef TINYSWIFT
     if (type->hasClangNode()) {
       if (auto *ctsd = dyn_cast_or_null<clang::ClassTemplateSpecializationDecl>(
               type->getClangDecl())) {
@@ -2439,6 +2455,7 @@ void Serializer::writeCrossReference(const Decl *D) {
             getASTContext(), name, ctsd);
       }
     }
+#endif
 
     XRefTypePathPieceLayout::emitRecord(
         Out, ScratchRecord, abbrCode, addDeclBaseNameRef(name),
@@ -6009,6 +6026,7 @@ void Serializer::writeASTBlockEntity(Type ty) {
   TypeSerializer(*this).visit(ty);
 }
 
+#ifndef TINYSWIFT
 namespace {
 class ClangToSwiftBasicWriter :
     public swift::DataStreamBasicWriter<ClangToSwiftBasicWriter> {
@@ -6136,6 +6154,11 @@ void Serializer::writeASTBlockEntity(const clang::Type *ty) {
   ClangTypeLayout::emitRecord(Out, ScratchRecord, abbrCode,
                               typeData);
 }
+#else // TINYSWIFT
+void Serializer::writeASTBlockEntity(const clang::Type *ty) {
+  // No clang type serialization in TinySwift.
+}
+#endif
 
 template <typename SpecificASTBlockRecordKeeper>
 bool Serializer::writeASTBlockEntitiesIfNeeded(

@@ -1635,6 +1635,9 @@ static std::optional<ObjCReason> shouldMarkAsObjC(const ValueDecl *VD,
 
 /// Determine whether the given type is a C integer type.
 static bool isCIntegerType(Type type) {
+#ifdef TINYSWIFT
+  return false;
+#else
   auto nominal = type->getAnyNominal();
   if (!nominal) return false;
 
@@ -1668,6 +1671,7 @@ static bool isCIntegerType(Type type) {
 #include "swift/ClangImporter/BuiltinMappedTypes.def"
 
   return false;
+#endif
 }
 
 /// Determine whether the given enum should be @objc.

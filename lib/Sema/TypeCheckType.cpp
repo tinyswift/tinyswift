@@ -49,9 +49,7 @@
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/StringExtras.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
-#endif
 #include "swift/Parse/Lexer.h"
 #include "swift/Sema/SILTypeResolutionContext.h"
 #include "swift/Strings.h"
@@ -1126,6 +1124,7 @@ static Type applyGenericArguments(Type type,
         fixItReplace(repr->getSourceRange(), "UnsafeRawPointer");
   }
 
+#ifndef TINYSWIFT
   if (auto clangDecl = decl->getClangDecl()) {
     if (auto classTemplateDecl =
             dyn_cast<clang::ClassTemplateDecl>(clangDecl)) {
@@ -1165,6 +1164,7 @@ static Type applyGenericArguments(Type type,
       }
     }
   }
+#endif
   return result;
 }
 
@@ -1562,10 +1562,12 @@ static Type diagnoseUnknownType(const TypeResolution &resolution,
 
     diags.diagnose(L, diag::cannot_find_type_in_scope, repr->getNameRef())
         .highlight(R);
+#ifndef TINYSWIFT
     if (!ctx.LangOpts.DisableExperimentalClangImporterDiagnostics) {
       ctx.getClangModuleLoader()->diagnoseTopLevelValue(
           repr->getNameRef().getFullName());
     }
+#endif
 
     return ErrorType::get(ctx);
   }
@@ -1578,10 +1580,12 @@ static Type diagnoseUnknownType(const TypeResolution &resolution,
                   repr->getNameRef(), kind, parentType)
         .highlight(parentRange);
 
+#ifndef TINYSWIFT
     if (!ctx.LangOpts.DisableExperimentalClangImporterDiagnostics) {
       ctx.getClangModuleLoader()->diagnoseMemberValue(
           repr->getNameRef().getFullName(), parentType);
     }
+#endif
 
     return ErrorType::get(ctx);
   }
@@ -1641,10 +1645,12 @@ static Type diagnoseUnknownType(const TypeResolution &resolution,
                     repr->getNameRef(), kind, parentType)
           .highlight(parentRange);
 
+#ifndef TINYSWIFT
       if (!ctx.LangOpts.DisableExperimentalClangImporterDiagnostics) {
         ctx.getClangModuleLoader()->diagnoseMemberValue(
             repr->getNameRef().getFullName(), parentType);
       }
+#endif
 
       // Note where the type was defined, this can help diagnose if the user
       // expected name lookup to find a module when there's a conflicting type.
@@ -3410,6 +3416,7 @@ const clang::Type *TypeResolver::tryParseClangType(ConventionTypeAttr *conv,
     return nullptr;
   }
 
+#ifndef TINYSWIFT
   const clang::Type *type =
       getASTContext().getClangModuleLoader()->parseClangFunctionType(
           *clangTypeString, clangTypeLoc);
@@ -3417,6 +3424,9 @@ const clang::Type *TypeResolver::tryParseClangType(ConventionTypeAttr *conv,
     diagnose(clangTypeLoc, diag::unable_to_parse_c_function_type,
              *clangTypeString);
   return type;
+#else
+  return nullptr;
+#endif
 }
 
 NeverNullType

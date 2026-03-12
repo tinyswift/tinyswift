@@ -10,6 +10,7 @@ target_link_libraries(swiftFrontendTool INTERFACE
   clangAPINotes
   clangBasic)
 target_link_libraries(swiftFrontendTool PRIVATE
+    swiftClangImporter
     swiftDemangling
     swiftDependencyScan
     swiftFrontend
@@ -22,7 +23,6 @@ target_link_libraries(swiftFrontendTool PRIVATE
     swiftThreading)
 if(NOT TINYSWIFT_BUILD)
   target_link_libraries(swiftFrontendTool PRIVATE
-    swiftClangImporter
     swiftConstExtract
     swiftImmediate
     swiftIndex

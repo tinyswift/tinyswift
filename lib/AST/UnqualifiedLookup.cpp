@@ -30,9 +30,7 @@
 #include "swift/Basic/STLExtras.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Parse/Lexer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/TinyPtrVector.h"
@@ -952,10 +950,12 @@ DeclContext *swift::getModuleScopeLookupContext(DeclContext *dc) {
   // expansion triggered for the imported declaration. In such cases,
   // we want to use the parent source file as the lookup context, becauae
   // it has the appropriate resolved imports.
+#ifndef TINYSWIFT
   if (isa<ClangModuleUnit>(moduleScopeContext)) {
     if (auto parentSF = dc->getParentSourceFile())
       return parentSF;
   }
+#endif
 
   return moduleScopeContext;
 }

@@ -16,9 +16,7 @@
 #include "swift/AST/ASTNode.h"
 #include "swift/AST/ASTWalker.h"
 #include "swift/AST/Expr.h"
-#ifndef TINYSWIFT
 #include "swift/IDE/TypeCheckCompletionCallback.h"
-#endif
 
 namespace swift {
 

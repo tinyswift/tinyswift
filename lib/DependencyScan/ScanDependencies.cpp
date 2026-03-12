@@ -29,9 +29,7 @@
 #include "swift/Basic/FileTypes.h"
 #include "swift/Basic/LLVM.h"
 #include "swift/Basic/STLExtras.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
-#endif
 #include "swift/DependencyScan/DependencyScanImpl.h"
 #include "swift/DependencyScan/DependencyScanJSON.h"
 #include "swift/DependencyScan/DependencyScanningTool.h"

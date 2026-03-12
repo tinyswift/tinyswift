@@ -37,17 +37,15 @@
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
 #include "swift/Basic/Statistic.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
 #include "swift/ClangImporter/ClangModule.h"
 #include "swift/ClangImporter/SwiftAbstractBasicReader.h"
-#endif
-#include "swift/Serialization/SerializedModuleLoader.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Attr.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/AttributeCommonInfo.h"
 #include "clang/Index/USRGeneration.h"
+#include "swift/Serialization/SerializedModuleLoader.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -266,6 +264,7 @@ ModularizationError::diagnose(const ModuleFile *MF,
                      declIsType, expectedModule,
                      expectedModule->getModuleSourceFilename());
 
+#ifndef TINYSWIFT
   const clang::Module *expectedUnderlying =
                                    expectedModule->findUnderlyingClangModule();
   if (!expectedModule->isNonSwiftModule() &&
@@ -278,6 +277,7 @@ ModularizationError::diagnose(const ModuleFile *MF,
                        expectedUnderlying->Name,
                        filename);
   }
+#endif
 
   if (foundModule)
     ctx.Diags.diagnose(loc,
@@ -320,6 +320,7 @@ ModularizationError::diagnose(const ModuleFile *MF,
                        referenceModule->getModuleFilename());
   }
 
+#ifndef TINYSWIFT
   // If the missing decl was expected to be in a clang module,
   // it may be hidden by some clang defined passed via `-Xcc` affecting how
   // headers are seen.
@@ -328,6 +329,7 @@ ModularizationError::diagnose(const ModuleFile *MF,
                        diag::modularization_issue_audit_headers,
                        expectedModule->isNonSwiftModule(), expectedModule);
   }
+#endif
 
   // If the reference goes from a distributed module to a local module,
   // the compiler may have picked up an undesired module. We usually expect
@@ -352,6 +354,7 @@ ModularizationError::diagnose(const ModuleFile *MF,
       errorKind == Kind::DeclKindChanged) {
     StringRef foundModuleName = foundModule->getName().str();
     StringRef expectedModuleName = expectedModule->getName().str();
+#ifndef TINYSWIFT
     if (foundModuleName != expectedModuleName &&
         (foundModuleName.starts_with(expectedModuleName) ||
          expectedModuleName.starts_with(foundModuleName)) &&
@@ -361,6 +364,7 @@ ModularizationError::diagnose(const ModuleFile *MF,
                          diag::modularization_issue_related_modules,
                          declIsType, name);
     }
+#endif
   }
 
   ctx.Diags.flushConsumers();
@@ -994,8 +998,10 @@ ProtocolConformanceDeserializer::readNormalProtocolConformance(
     return doOrError.takeError();
   DeclContext *dc = doOrError.get();
 
+#ifndef TINYSWIFT
   assert(!isa<ClangModuleUnit>(dc->getModuleScopeContext())
          && "should not have serialized a conformance from a clang module");
+#endif
   Type conformingType = dc->getSelfInterfaceType();
   PrettyStackTraceType trace(ctx, "reading conformance for", conformingType);
 
@@ -1870,6 +1876,7 @@ getActualCtorInitializerKind(uint8_t raw) {
   return std::nullopt;
 }
 
+#ifndef TINYSWIFT
 static bool isReExportedToModule(const ValueDecl *value,
                                  const ModuleDecl *expectedModule) {
   const DeclContext *valueDC = value->getDeclContext();
@@ -1885,6 +1892,7 @@ static bool isReExportedToModule(const ValueDecl *value,
     return exportedName == toClangModule->getExportedModuleName();
   return exportedName == expectedModule->getName().str();
 }
+#endif
 
 /// Remove values from \p values that don't match the expected type or module.
 ///
@@ -1926,8 +1934,11 @@ static void filterValues(Type expectedTy, ModuleDecl *expectedModule,
     // FIXME: Should be able to move a value from an extension in a derived
     // module to the original definition in a base module.
     if (expectedModule && !value->hasClangNode() &&
-        value->getModuleContext() != expectedModule &&
-        !isReExportedToModule(value, expectedModule))
+        value->getModuleContext() != expectedModule
+#ifndef TINYSWIFT
+        && !isReExportedToModule(value, expectedModule)
+#endif
+        )
       return true;
 
     // If we're expecting a member within a constrained extension with a
@@ -2503,6 +2514,7 @@ giveUpFastPath:
 
       if (!privateDiscriminator.empty()) {
         if (importedFromClang) {
+#ifndef TINYSWIFT
           // This is a clang imported class template, that's
           // serialized using original template name, and
           // its USR that denotes the specific specialization.
@@ -2524,6 +2536,7 @@ giveUpFastPath:
               }
             }
           }
+#endif
         } else {
           ModuleDecl *searchModule = M;
           if (!searchModule)
@@ -2916,9 +2929,13 @@ ModuleDecl *ModuleFile::getModule(ModuleID MID) {
     case CURRENT_MODULE_ID:
       return FileContext->getParentModule();
     case OBJC_HEADER_MODULE_ID: {
+#ifndef TINYSWIFT
       auto clangImporter =
         static_cast<ClangImporter *>(getContext().getClangModuleLoader());
       return clangImporter->getImportedHeaderModule();
+#else
+      return nullptr;
+#endif
     }
     case SUBSCRIPT_ID:
     case CONSTRUCTOR_ID:
@@ -7510,6 +7527,7 @@ Expected<Type> DESERIALIZE_TYPE(BOUND_GENERIC_TYPE)(
     genericArgs.push_back(argTy.get());
   }
 
+#ifndef TINYSWIFT
   if (auto clangDecl = nominal->getClangDecl()) {
     if (auto ctd = dyn_cast<clang::ClassTemplateDecl>(clangDecl)) {
       auto clangImporter = static_cast<ClangImporter *>(
@@ -7534,6 +7552,7 @@ Expected<Type> DESERIALIZE_TYPE(BOUND_GENERIC_TYPE)(
       return instantiation->getDeclaredInterfaceType();
     }
   }
+#endif
 
   return BoundGenericType::get(nominal, parentTy, genericArgs);
 }
@@ -8043,6 +8062,7 @@ Expected<Type> ModuleFile::getTypeChecked(TypeID TID) {
   return typeOrOffset.get();
 }
 
+#ifndef TINYSWIFT
 namespace {
 
 class SwiftToClangBasicReader :
@@ -8205,6 +8225,12 @@ ModuleFile::getClangType(ClangTypeID TID) {
   typeOrOffset = clangType;
   return clangType;
 }
+#else // TINYSWIFT
+llvm::Expected<const clang::Type *>
+ModuleFile::getClangType(ClangTypeID TID) {
+  return nullptr;
+}
+#endif
 
 Decl *ModuleFile::handleErrorAndSupplyMissingClassMember(
     ASTContext &context, llvm::Error &&error,

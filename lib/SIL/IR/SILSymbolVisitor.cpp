@@ -26,9 +26,7 @@
 #include "swift/AST/SynthesizedFileUnit.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/SIL/FormalLinkage.h"
 #include "swift/SIL/SILLinkage.h"
 #include "swift/SIL/SILModule.h"
@@ -394,10 +392,12 @@ class SILSymbolVisitorImpl : public ASTVisitor<SILSymbolVisitorImpl> {
     if (!Ctx.getOpts().PublicOrPackageSymbolsOnly)
       return false;
 
+#ifndef TINYSWIFT
     // Don't skip nominals from clang modules; they have PublicNonUnique
     // linkage.
     if (isa<ClangModuleUnit>(NTD->getDeclContext()->getModuleScopeContext()))
       return false;
+#endif
 
     return !(getDeclLinkage(NTD) == FormalLinkage::PublicUnique ||
              getDeclLinkage(NTD) == FormalLinkage::PackageUnique);

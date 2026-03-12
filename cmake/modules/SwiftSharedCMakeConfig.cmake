@@ -41,6 +41,12 @@ macro(swift_common_standalone_build_config_llvm product)
   precondition(LLVM_TOOLS_BINARY_DIR)
   escape_path_for_xcode("${LLVM_BUILD_TYPE}" "${LLVM_TOOLS_BINARY_DIR}" LLVM_TOOLS_BINARY_DIR)
 
+  # Homebrew / stock LLVM installs don't export LLVM_BUILD_LIBRARY_DIR.
+  # Fall back to LLVM_LIBRARY_DIR which is always present.
+  if(NOT LLVM_BUILD_LIBRARY_DIR AND LLVM_LIBRARY_DIR)
+    set(LLVM_BUILD_LIBRARY_DIR "${LLVM_LIBRARY_DIR}")
+  endif()
+
   precondition_translate_flag(LLVM_BUILD_LIBRARY_DIR LLVM_LIBRARY_DIR)
   escape_path_for_xcode("${LLVM_BUILD_TYPE}" "${LLVM_LIBRARY_DIR}" LLVM_LIBRARY_DIR)
 
@@ -253,7 +259,9 @@ macro(swift_common_standalone_build_config product)
   swift_common_standalone_build_config_llvm(${product})
   if(SWIFT_INCLUDE_TOOLS)
     swift_common_standalone_build_config_clang(${product})
-    swift_common_standalone_build_config_cmark(${product})
+    if(NOT TINYSWIFT_BUILD)
+      swift_common_standalone_build_config_cmark(${product})
+    endif()
   endif()
 
   # Enable groups for IDE generators (Xcode and MSVC).

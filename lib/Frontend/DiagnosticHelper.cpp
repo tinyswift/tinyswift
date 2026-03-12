@@ -24,9 +24,7 @@
 #include "swift/Frontend/Frontend.h"
 #include "swift/Frontend/PrintingDiagnosticConsumer.h"
 #include "swift/Frontend/SerializedDiagnosticConsumer.h"
-#ifndef TINYSWIFT
 #include "swift/Migrator/FixitFilter.h"
-#endif
 #include "llvm/Support/raw_ostream.h"
 
 #if __has_include(<unistd.h>)
@@ -74,6 +72,7 @@ private:
   std::unique_ptr<DiagnosticConsumer> FixItsConsumer;
 };
 
+#ifndef TINYSWIFT
 namespace {
 
 /// If there is an error with fixits it writes the fixits as edits in json
@@ -122,6 +121,7 @@ private:
 };
 
 } // anonymous namespace
+#endif // !TINYSWIFT
 
 /// Creates a diagnostic consumer that handles dispatching diagnostics to
 /// multiple output files, based on the supplementary output paths specified by
@@ -213,6 +213,7 @@ static std::unique_ptr<DiagnosticConsumer> createAccumulatingDiagnosticConsumer(
       });
 }
 
+#ifndef TINYSWIFT
 /// Creates a diagnostic consumer that handles JSONFixIt diagnostics, based on
 /// the supplementary output paths specified in \p options.
 ///
@@ -230,6 +231,7 @@ createJSONFixItDiagnosticConsumerIfNeeded(
             fixItsOutputPath.str(), invocation.getDiagnosticOptions());
       });
 }
+#endif // !TINYSWIFT
 
 DiagnosticHelper::Implementation::Implementation(CompilerInstance &instance,
                                                  llvm::raw_pwrite_stream &OS,
@@ -267,9 +269,11 @@ void DiagnosticHelper::Implementation::initDiagConsumers(
   if (SerializedConsumerDispatcher)
     instance.addDiagnosticConsumer(SerializedConsumerDispatcher.get());
 
+#ifndef TINYSWIFT
   FixItsConsumer = createJSONFixItDiagnosticConsumerIfNeeded(invocation);
   if (FixItsConsumer)
     instance.addDiagnosticConsumer(FixItsConsumer.get());
+#endif
 
   if (invocation.getDiagnosticOptions().UseColor)
     PDC.forceColors();

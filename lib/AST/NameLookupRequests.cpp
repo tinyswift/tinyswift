@@ -22,9 +22,7 @@
 #include "swift/AST/SourceFile.h"
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
-#endif
 #include "swift/Subsystems.h"
 
 using namespace swift;
@@ -547,7 +545,6 @@ SourceLoc
 swift::extractNearestSourceLoc(const ClangRecordMemberLookupDescriptor &desc) {
   return extractNearestSourceLoc(desc.recordDecl);
 }
-
 //----------------------------------------------------------------------------//
 // CustomRefCountingOperation computation.
 //----------------------------------------------------------------------------//
@@ -564,7 +561,6 @@ SourceLoc
 swift::extractNearestSourceLoc(CustomRefCountingOperationDescriptor desc) {
   return SourceLoc();
 }
-
 //----------------------------------------------------------------------------//
 // Macro-related adjustments to name lookup requests.
 //----------------------------------------------------------------------------//

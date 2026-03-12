@@ -896,13 +896,15 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG YES)
 include(FindThreads)
 
-if(SWIFT_PATH_TO_CMARK_BUILD)
-  execute_process(COMMAND ${SWIFT_PATH_TO_CMARK_BUILD}/src/cmark --version
-    OUTPUT_VARIABLE _CMARK_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  message(STATUS "CMark Version: ${_CMARK_VERSION}")
-elseif(SWIFT_INCLUDE_TOOLS)
-  find_package(cmark-gfm CONFIG REQUIRED)
+if(NOT TINYSWIFT_BUILD)
+  if(SWIFT_PATH_TO_CMARK_BUILD)
+    execute_process(COMMAND ${SWIFT_PATH_TO_CMARK_BUILD}/src/cmark --version
+      OUTPUT_VARIABLE _CMARK_VERSION
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "CMark Version: ${_CMARK_VERSION}")
+  elseif(SWIFT_INCLUDE_TOOLS)
+    find_package(cmark-gfm CONFIG REQUIRED)
+  endif()
 endif()
 message(STATUS "")
 
@@ -1548,7 +1550,9 @@ if(SWIFT_INCLUDE_TOOLS)
   # Diagnostics information is only useful for the frontend compiler
   # anyway, so let's only include it if the compiler is being built,
   # which at the moment seems like if SWIFT_INCLUDE_TOOLS is defined.
-  add_subdirectory(localization)
+  if(NOT TINYSWIFT_BUILD)
+    add_subdirectory(localization)
+  endif()
 endif()
 
 add_subdirectory(utils)

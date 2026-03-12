@@ -36,9 +36,7 @@
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Statistic.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Frontend/Frontend.h"
 #include "swift/SIL/PrettyStackTrace.h"
 #include "swift/SIL/SILArgument.h"
@@ -698,8 +696,10 @@ static bool isEmittedOnDemand(SILModule &M, SILDeclRef constant) {
     if (!shouldEmitFunctionBody(fd))
       return false;
 
+#ifndef TINYSWIFT
     if (isa<ClangModuleUnit>(dc->getModuleScopeContext()))
       return true;
+#endif
 
     if (fd->hasForcedStaticDispatch())
       return true;
@@ -707,6 +707,7 @@ static bool isEmittedOnDemand(SILModule &M, SILDeclRef constant) {
     break;
   }
   case SILDeclRef::Kind::Allocator: {
+#ifndef TINYSWIFT
     auto *cd = cast<ConstructorDecl>(d);
     // For factories, we don't need to emit a special thunk; the normal
     // foreign-to-native thunk is sufficient.
@@ -714,15 +715,18 @@ static bool isEmittedOnDemand(SILModule &M, SILDeclRef constant) {
         !cd->isFactoryInit() &&
         (dc->getSelfClassDecl() || shouldEmitFunctionBody(cd)))
       return true;
+#endif
 
     break;
   }
   case SILDeclRef::Kind::EnumElement:
     return true;
   case SILDeclRef::Kind::DefaultArgGenerator: {
+#ifndef TINYSWIFT
     // Default arguments of C++ functions are only emitted if used.
     if (isa<ClangModuleUnit>(dc->getModuleScopeContext()))
       return true;
+#endif
 
     break;
   }

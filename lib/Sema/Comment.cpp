@@ -200,10 +200,14 @@ static std::optional<StringRef> getDirectBriefComment(const Decl *D) {
   if (RC.isEmpty())
     return std::nullopt;
 
+#ifndef TINYSWIFT
   SmallString<256> BriefStr;
   llvm::raw_svector_ostream OS(BriefStr);
   printBriefComment(RC, OS);
   return Ctx.AllocateCopy(BriefStr.str());
+#else
+  return StringRef();
+#endif
 }
 
 StringRef SemanticBriefCommentRequest::evaluate(Evaluator &evaluator,

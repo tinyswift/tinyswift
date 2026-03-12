@@ -29,9 +29,7 @@
 #include "swift/AST/ModuleLoader.h"
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
-#endif
 #include "swift/SIL/SILModule.h"
 #include "swift/SIL/SILType.h"
 #include "swift/SIL/AbstractionPatternGenerators.h"
@@ -3629,6 +3627,7 @@ static CanSILFunctionType getSILFunctionTypeForClangDecl(
         constant, std::nullopt, ProtocolConformanceRef());
   }
 
+#ifndef TINYSWIFT
   if (auto method = dyn_cast<clang::CXXMethodDecl>(clangDecl)) {
     // Static methods and ctors should be lowered like plane functions
     // (case below).
@@ -3644,6 +3643,7 @@ static CanSILFunctionType getSILFunctionTypeForClangDecl(
                                 std::nullopt, ProtocolConformanceRef());
     }
   }
+#endif
 
   if (auto func = dyn_cast<clang::FunctionDecl>(clangDecl)) {
     auto clangType = func->getType().getTypePtr();
@@ -3921,11 +3921,13 @@ static CanSILFunctionType getUncachedSILFunctionTypeForConstant(
       // According to [NOTE: ClangTypeInfo-contents], we need to wrap a function
       // type in an additional clang::PointerType.
       if (clangType->isFunctionType()) {
+#ifndef TINYSWIFT
         clangType =
             static_cast<ClangImporter *>(TC.Context.getClangModuleLoader())
                 ->getClangASTContext()
                 .getPointerType(clang::QualType(clangType, 0))
                 .getTypePtr();
+#endif
       }
       extInfoBuilder = extInfoBuilder.withClangFunctionType(clangType);
     }

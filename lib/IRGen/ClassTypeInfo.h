@@ -20,9 +20,7 @@
 #include "ClassLayout.h"
 #include "HeapTypeInfo.h"
 
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
-#endif
 
 namespace swift {
 namespace irgen {

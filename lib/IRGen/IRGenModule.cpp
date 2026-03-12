@@ -24,9 +24,7 @@
 #include "swift/AST/ModuleDependencies.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/LLVMExtras.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
-#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/IRGen/IRGenPublic.h"
 #include "swift/IRGen/Linking.h"
@@ -92,6 +90,7 @@ static llvm::StructType *createStructType(IRGenModule &IGM,
                                   name, packed);
 }
 
+#ifndef TINYSWIFT
 static clang::CodeGenerator *createClangCodeGenerator(ASTContext &Context,
                                                       llvm::LLVMContext &LLVMContext,
                                                       const IRGenOptions &Opts,
@@ -160,6 +159,15 @@ static clang::CodeGenerator *createClangCodeGenerator(ASTContext &Context,
   ClangCodeGen->Initialize(ClangContext, CGTI);
   return ClangCodeGen;
 }
+#else
+static clang::CodeGenerator *createClangCodeGenerator(ASTContext &Context,
+                                                      llvm::LLVMContext &LLVMContext,
+                                                      const IRGenOptions &Opts,
+                                                      StringRef ModuleName,
+                                                      StringRef PD) {
+  llvm_unreachable("createClangCodeGenerator not available in TINYSWIFT");
+}
+#endif // !TINYSWIFT
 
 #ifndef NDEBUG
 static ValueDecl *lookupSimple(ModuleDecl *module, ArrayRef<StringRef> declPath) {
@@ -265,6 +273,7 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
   FloatTy = llvm::Type::getFloatTy(getLLVMContext());
   DoubleTy = llvm::Type::getDoubleTy(getLLVMContext());
 
+#ifndef TINYSWIFT
   auto CI = static_cast<ClangImporter*>(&*Context.getClangModuleLoader());
   assert(CI && "no clang module loader");
   auto &clangASTContext = CI->getClangASTContext();
@@ -272,6 +281,9 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
   ObjCBoolTy = Int1Ty;
   if (clangASTContext.getTargetInfo().useSignedCharForObjCBool())
     ObjCBoolTy = Int8Ty;
+#else
+  ObjCBoolTy = Int1Ty;
+#endif // !TINYSWIFT
 
   RefCountedStructTy =
     llvm::StructType::create(getLLVMContext(), "swift.refcounted");
@@ -583,26 +595,38 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
   // TODO: use "tinycc" on platforms that support it
   DefaultCC = SWIFT_DEFAULT_LLVM_CC;
 
-  bool isSwiftCCSupported =
-    clangASTContext.getTargetInfo().checkCallingConvention(clang::CC_Swift)
-    == clang::TargetInfo::CCCR_OK;
-  if (isSwiftCCSupported) {
-    SwiftCC = llvm::CallingConv::Swift;
-  } else {
-    SwiftCC = DefaultCC;
-  }
+#ifndef TINYSWIFT
+  {
+    auto CI = static_cast<ClangImporter*>(&*Context.getClangModuleLoader());
+    auto &clangAST = CI->getClangASTContext();
+    bool isSwiftCCSupported =
+      clangAST.getTargetInfo().checkCallingConvention(clang::CC_Swift)
+      == clang::TargetInfo::CCCR_OK;
+    if (isSwiftCCSupported) {
+      SwiftCC = llvm::CallingConv::Swift;
+    } else {
+      SwiftCC = DefaultCC;
+    }
 
-  bool isAsyncCCSupported =
-    clangASTContext.getTargetInfo().checkCallingConvention(clang::CC_SwiftAsync)
-    == clang::TargetInfo::CCCR_OK;
-  if (isAsyncCCSupported) {
-    SwiftAsyncCC = llvm::CallingConv::SwiftTail;
-    AsyncTailCallKind = llvm::CallInst::TCK_MustTail;
-  } else {
-    SwiftAsyncCC = SwiftCC;
-    AsyncTailCallKind = llvm::CallInst::TCK_Tail;
+    bool isAsyncCCSupported =
+      clangAST.getTargetInfo().checkCallingConvention(clang::CC_SwiftAsync)
+      == clang::TargetInfo::CCCR_OK;
+    if (isAsyncCCSupported) {
+      SwiftAsyncCC = llvm::CallingConv::SwiftTail;
+      AsyncTailCallKind = llvm::CallInst::TCK_MustTail;
+    } else {
+      SwiftAsyncCC = SwiftCC;
+      AsyncTailCallKind = llvm::CallInst::TCK_Tail;
+    }
   }
+#else
+  // Assume Swift calling convention is supported
+  SwiftCC = llvm::CallingConv::Swift;
+  SwiftAsyncCC = llvm::CallingConv::SwiftTail;
+  AsyncTailCallKind = llvm::CallInst::TCK_MustTail;
+#endif
 
+#ifndef TINYSWIFT
   if (opts.DebugInfoLevel > IRGenDebugInfoLevel::None)
     DebugInfo = IRGenDebugInfo::createIRGenDebugInfo(IRGen.Opts, *CI, *this,
                                                      Module,
@@ -613,6 +637,7 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
     ClangASTContext =
         &static_cast<ClangImporter *>(loader)->getClangASTContext();
   }
+#endif // !TINYSWIFT
 
   if (ClangASTContext) {
     auto atomicBoolTy = ClangASTContext->getAtomicType(ClangASTContext->BoolTy);
@@ -628,12 +653,23 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
     // arguments should be added, we need to mark it as `swifterror` even though
     // it's not in register.
     ShouldUseSwiftError = true;
-  } else if (!isSwiftCCSupported) {
-    ShouldUseSwiftError = false;
   } else {
-    ShouldUseSwiftError =
-        clang::CodeGen::swiftcall::isSwiftErrorLoweredInRegister(
-            ClangCodeGen->CGM());
+#ifndef TINYSWIFT
+    auto CI = static_cast<ClangImporter*>(&*Context.getClangModuleLoader());
+    auto &clangAST = CI->getClangASTContext();
+    bool isSwiftCCSupported =
+      clangAST.getTargetInfo().checkCallingConvention(clang::CC_Swift)
+      == clang::TargetInfo::CCCR_OK;
+    if (!isSwiftCCSupported) {
+      ShouldUseSwiftError = false;
+    } else {
+      ShouldUseSwiftError =
+          clang::CodeGen::swiftcall::isSwiftErrorLoweredInRegister(
+              ClangCodeGen->CGM());
+    }
+#else
+    ShouldUseSwiftError = true;
+#endif
   }
 
 #ifndef NDEBUG
@@ -2263,6 +2299,7 @@ uint32_t swift::irgen::getSwiftABIVersion() {
   return IRGenModule::swiftVersion;
 }
 
+#ifndef TINYSWIFT
 llvm::Triple IRGenerator::getEffectiveClangTriple() {
   auto CI = static_cast<ClangImporter *>(
       &*SIL.getASTContext().getClangModuleLoader());
@@ -2283,6 +2320,19 @@ const llvm::StringRef IRGenerator::getClangDataLayoutString() {
       ->getTargetInfo()
       .getDataLayoutString();
 }
+#else
+llvm::Triple IRGenerator::getEffectiveClangTriple() {
+  return SIL.getASTContext().LangOpts.Target;
+}
+
+llvm::Triple IRGenerator::getEffectiveClangVariantTriple() {
+  return llvm::Triple();
+}
+
+const llvm::StringRef IRGenerator::getClangDataLayoutString() {
+  return llvm::StringRef();
+}
+#endif // !TINYSWIFT
 
 TypeExpansionContext IRGenModule::getMaximalTypeExpansionContext() const {
   return TypeExpansionContext::maximal(getSILModule().getAssociatedContext(),
@@ -2333,6 +2383,7 @@ bool IRGenModule::isConcurrencyAvailable() {
   return deploymentAvailability.isContainedIn(ctx.getConcurrencyAvailability());
 }
 
+#ifndef TINYSWIFT
 /// Pretend the other files that drivers/build systems expect exist by
 /// creating empty files. Used by UseSingleModuleLLVMEmission when
 /// num-threads > 0.
@@ -2368,3 +2419,11 @@ bool swift::writeEmptyOutputFilesFor(
   }
   return false;
 }
+#else
+bool swift::writeEmptyOutputFilesFor(
+  const ASTContext &Context,
+  std::vector<std::string>& ParallelOutputFilenames,
+  const IRGenOptions &IRGenOpts) {
+  return false;
+}
+#endif // !TINYSWIFT

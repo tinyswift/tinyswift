@@ -30,9 +30,7 @@
 #include "swift/AST/Stmt.h"
 #include "swift/AST/TypeRepr.h"
 #include "swift/Basic/STLExtras.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Parse/Lexer.h"
 #include "llvm/Support/Compiler.h"
 
@@ -275,10 +273,14 @@ bool AbstractFunctionDeclScope::lookupLocalsOrMembers(DeclConsumer consumer) con
   if (!dc->isTypeContext())
     return false;
 
+#ifndef TINYSWIFT
   if (!isa<ClangModuleUnit>(dc->getModuleScopeContext()))
     return false;
 
   return consumer.lookInMembers(cast<GenericContext>(dc->getAsDecl()));
+#else
+  return false;
+#endif
 }
 
 bool GenericTypeOrExtensionScope::lookupLocalsOrMembers(

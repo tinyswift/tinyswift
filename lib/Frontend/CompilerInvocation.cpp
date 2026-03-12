@@ -26,9 +26,7 @@
 #include "swift/Parse/ParseVersion.h"
 #include "swift/SIL/SILBridging.h"
 #include "swift/Strings.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
-#endif
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -366,6 +364,7 @@ setBridgingHeaderFromFrontendOptions(ClangImporterOptions &ImporterOpts,
 }
 
 void CompilerInvocation::computeCXXStdlibOptions() {
+#ifndef TINYSWIFT
   auto [clangDriver, clangDiagEngine] =
       ClangImporter::createClangDriver(LangOpts, ClangImporterOpts);
   auto clangDriverArgs = ClangImporter::createClangArgs(
@@ -400,6 +399,7 @@ void CompilerInvocation::computeCXXStdlibOptions() {
     LangOpts.CXXStdlib = toCXXStdlibKind(cxxStdlibKind);
     LangOpts.PlatformDefaultCXXStdlib = toCXXStdlibKind(cxxDefaultStdlibKind);
   }
+#endif
 }
 
 void CompilerInvocation::setRuntimeResourcePath(StringRef Path) {
@@ -2068,6 +2068,7 @@ static bool ParseClangImporterArgs(ClangImporterOptions &Opts, ArgList &Args,
   return false;
 }
 
+#ifndef TINYSWIFT
 static void ParseSymbolGraphArgs(symbolgraphgen::SymbolGraphOptions &Opts,
                                  ArgList &Args,
                                  DiagnosticEngine &Diags,
@@ -2107,6 +2108,7 @@ static void ParseSymbolGraphArgs(symbolgraphgen::SymbolGraphOptions &Opts,
   Opts.PrintMessages = false;
   Opts.IncludeClangDocs = false;
 }
+#endif // !TINYSWIFT
 
 static bool validateSwiftModuleFileArgumentAndAdd(const std::string &swiftModuleArgument,
                                                   DiagnosticEngine &Diags,
@@ -3771,7 +3773,9 @@ bool CompilerInvocation::parseArgs(
     return true;
   }
 
+#ifndef TINYSWIFT
   ParseSymbolGraphArgs(SymbolGraphOpts, ParsedArgs, Diags, LangOpts);
+#endif
 
   if (ParseSearchPathArgs(SearchPathOpts, ParsedArgs, Diags,
                           CASOpts, FrontendOpts, workingDirectory)) {

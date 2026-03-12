@@ -22,7 +22,11 @@ function(generate_revision_inc revision_inc_var name dir)
   # Create custom target to generate the VC revision include.
   set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/${name}Revision.inc")
 
+  # Prefer LLVM's source tree script; fall back to our bundled stub.
   set(generate_vcs_version_script "${LLVM_MAIN_SRC_DIR}/cmake/modules/GenerateVersionFromVCS.cmake")
+  if(NOT EXISTS "${generate_vcs_version_script}")
+    set(generate_vcs_version_script "${CMAKE_SOURCE_DIR}/cmake/modules/GenerateVersionFromVCS.cmake")
+  endif()
 
   add_custom_command(OUTPUT "${version_inc}"
     DEPENDS "${${name}_vc}" "${generate_vcs_version_script}"

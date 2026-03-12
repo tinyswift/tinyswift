@@ -29,9 +29,7 @@
 #include "swift/AST/TypeMemberVisitor.h"
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/IRGen/Linking.h"
 #include "swift/Runtime/HeapObject.h"
@@ -1529,11 +1527,14 @@ bool IRGenerator::hasLazyMetadata(TypeDecl *type) {
 
   auto canBeLazy = [&]() -> bool {
     auto *dc = type->getDeclContext();
+#ifndef TINYSWIFT
     if (isa<ClangModuleUnit>(dc->getModuleScopeContext())) {
       if (auto nominal = dyn_cast<NominalTypeDecl>(type)) {
         return requiresForeignTypeMetadata(nominal);
       }
-    } else if (dc->getParentModule() == SIL.getSwiftModule()) {
+    } else
+#endif
+    if (dc->getParentModule() == SIL.getSwiftModule()) {
       // When compiling with -Onone keep all metadata for the debugger. Even if
       // it is not used by the program itself.
       if (!Opts.shouldOptimize())
@@ -2352,6 +2353,7 @@ LinkInfo LinkInfo::get(const UniversalLinkageInfo &linkInfo,
   if (const auto *DC = entity.getDeclContextForEmission()) {
     if (const auto *MD = DC->getParentModule())
       isKnownLocal = MD == swiftModule || MD->isStaticLibrary();
+#ifndef TINYSWIFT
     if (!isKnownLocal && !isDefinition) {
       bool isClangImportedEntity =
           isa<ClangModuleUnit>(DC->getModuleScopeContext());
@@ -2363,6 +2365,7 @@ LinkInfo LinkInfo::get(const UniversalLinkageInfo &linkInfo,
       if (isClangImportedEntity && entity.isNominalTypeDescriptor())
         isKnownLocal = true;
     }
+#endif
   } else if (entity.hasSILFunction()) {
     // SIL serialized entities (functions, witness tables, vtables) do not have
     // an associated DeclContext and are serialized into the current module.  As
@@ -4025,7 +4028,11 @@ IRGenModule::getAddrOfLLVMVariableOrGOTEquivalent(LinkEntity entity) {
 
   if (auto *entityDC = entity.getDeclContextForEmission()) {
     auto *entitySF = entityDC->getModuleScopeContext();
+#ifndef TINYSWIFT
     bool clangImportedEntity = isa<ClangModuleUnit>(entitySF);
+#else
+    bool clangImportedEntity = false;
+#endif
 
     auto &mod = getSILModule();
 

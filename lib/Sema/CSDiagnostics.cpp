@@ -40,9 +40,7 @@
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/SourceLoc.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporterRequests.h"
-#endif
 #include "swift/Parse/Lexer.h"
 #include "swift/Sema/IDETypeChecking.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -4082,6 +4080,9 @@ void MissingMemberFailure::diagnoseUnsafeCxxMethod(SourceLoc loc,
                                                    ASTNode anchor,
                                                    Type baseType,
                                                    DeclName name) const {
+#ifdef TINYSWIFT
+  return;
+#else
   auto &ctx = baseType->getASTContext();
 
   if (baseType->getAnyNominal() == nullptr ||
@@ -4242,6 +4243,7 @@ void MissingMemberFailure::diagnoseUnsafeCxxMethod(SourceLoc loc,
       }
     }
   }
+#endif
 }
 
 /// When a user refers a enum case with a wrong member name, we try to find a
@@ -4392,6 +4394,7 @@ bool MissingMemberFailure::diagnoseAsError() {
     emitDiagnostic(diagnostic, baseType, getName())
         .highlight(getSourceRange())
         .highlight(nameLoc.getSourceRange());
+#ifndef TINYSWIFT
     const auto &ctx = getSolution().getDC()->getASTContext();
     if (!ctx.LangOpts.DisableExperimentalClangImporterDiagnostics) {
       ctx.getClangModuleLoader()->diagnoseMemberValue(getName().getFullName(),
@@ -4399,6 +4402,7 @@ bool MissingMemberFailure::diagnoseAsError() {
       diagnoseUnsafeCxxMethod(getLoc(), anchor, baseType,
                               getName().getFullName());
     }
+#endif
   };
 
   TypoCorrectionResults corrections(getName(), nameLoc);

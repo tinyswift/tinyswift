@@ -48,9 +48,7 @@
 #include "swift/Basic/TargetInfo.h"
 #include "swift/Basic/UUID.h"
 #include "swift/Basic/Version.h"
-#ifndef TINYSWIFT
 #include "swift/ConstExtract/ConstExtract.h"
-#endif
 #include "swift/DependencyScan/ScanDependencies.h"
 #include "swift/Frontend/CachedDiagnostics.h"
 #include "swift/Frontend/CachingUtils.h"
@@ -61,23 +59,17 @@
 #include "swift/Frontend/ModuleInterfaceLoader.h"
 #include "swift/Frontend/ModuleInterfaceSupport.h"
 #include "swift/IRGen/TBDGen.h"
-#ifndef TINYSWIFT
 #include "swift/Immediate/Immediate.h"
 #include "swift/Index/IndexRecord.h"
 #include "swift/Migrator/FixitFilter.h"
 #include "swift/Migrator/Migrator.h"
-#endif
 #include "swift/Option/Options.h"
-#ifndef TINYSWIFT
 #include "swift/PrintAsClang/PrintAsClang.h"
-#endif
 #include "swift/SILOptimizer/PassManager/Passes.h"
 #include "swift/Serialization/SerializationOptions.h"
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Subsystems.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
-#endif
 
 #include "clang/Lex/Preprocessor.h"
 
@@ -156,6 +148,7 @@ static bool writeSIL(SILModule &SM, const PrimarySpecificPaths &PSPs,
                   PSPs.OutputFilename, Instance.getOutputBackend());
 }
 
+#ifndef TINYSWIFT
 /// Prints the Objective-C "generated header" interface for \p M to \p
 /// outputPath.
 /// Print the exposed "generated header" interface for \p M to \p
@@ -178,6 +171,7 @@ static bool printAsClangHeaderIfNeeded(llvm::vfs::OutputBackend &outputBackend,
                                   irGenOpts, clangHeaderSearchInfo);
       });
 }
+#endif
 
 /// Prints the stable module interface for \p M to \p outputPath.
 ///
@@ -313,6 +307,7 @@ static void countStatsPostSILGen(UnifiedStatsReporter &Stats,
   C.NumSILGenGlobalVariables += Module.getSILGlobalList().size();
 }
 
+#ifndef TINYSWIFT
 static bool precompileBridgingHeader(const CompilerInstance &Instance) {
   const auto &Invocation = Instance.getInvocation();
   const auto &opts = Invocation.getFrontendOptions();
@@ -350,6 +345,7 @@ static bool dumpPrecompiledClangModule(const CompilerInstance &Instance) {
       opts.InputsAndOutputs.getFilenameOfFirstInput(),
       opts.InputsAndOutputs.getSingleOutputFilename());
 }
+#endif
 
 static bool buildModuleFromInterface(CompilerInstance &Instance) {
   const auto &Invocation = Instance.getInvocation();
@@ -590,6 +586,7 @@ static void emitSwiftdepsForAllPrimaryInputsIfNeeded(
   }
 }
 
+#ifndef TINYSWIFT
 static bool emitConstValuesForWholeModuleIfNeeded(
     CompilerInstance &Instance) {
   const auto &Invocation = Instance.getInvocation();
@@ -653,6 +650,7 @@ static void emitConstValuesForAllPrimaryInputsIfNeeded(
                    });
   }
 }
+#endif
 
 static bool writeModuleSemanticInfoIfNeeded(CompilerInstance &Instance) {
   const auto &Invocation = Instance.getInvocation();
@@ -803,6 +801,7 @@ bool swift::performCompileStepsPostSema(CompilerInstance &Instance,
   return result;
 }
 
+#ifndef TINYSWIFT
 static void emitIndexDataForSourceFile(SourceFile *PrimarySourceFile,
                                        const CompilerInstance &Instance);
 
@@ -815,6 +814,7 @@ static void emitIndexData(const CompilerInstance &Instance) {
       emitIndexDataForSourceFile(SF, Instance);
   }
 }
+#endif
 
 /// Emits all "one-per-module" supplementary outputs that don't depend on
 /// anything past type-checking.
@@ -839,6 +839,7 @@ static bool emitAnyWholeModulePostTypeCheckSupplementaryOutputs(
   // failure does not mean skipping the rest.
   bool hadAnyError = false;
 
+#ifndef TINYSWIFT
   if ((!Context.hadError() || opts.AllowModuleWithCompilerErrors) &&
       opts.InputsAndOutputs.hasClangHeaderOutputPath()) {
     std::string BridgingHeaderPathForPrint = Instance.getBridgingHeaderPath();
@@ -860,6 +861,7 @@ static bool emitAnyWholeModulePostTypeCheckSupplementaryOutputs(
             ->getClangPreprocessor()
             .getHeaderSearchInfo());
   }
+#endif
 
   // Only want the header if there's been any errors, ie. there's not much
   // point outputting a swiftinterface for an invalid module
@@ -914,9 +916,11 @@ static bool emitAnyWholeModulePostTypeCheckSupplementaryOutputs(
     hadAnyError |= writeModuleSemanticInfoIfNeeded(Instance);
   }
 
+#ifndef TINYSWIFT
   {
     hadAnyError |= emitConstValuesForWholeModuleIfNeeded(Instance);
   }
+#endif
   return hadAnyError;
 }
 
@@ -1093,9 +1097,11 @@ static void performEndOfPipelineActions(CompilerInstance &Instance) {
     }
   }
 
+#ifndef TINYSWIFT
   if (shouldEmitIndexData(Invocation)) {
     emitIndexData(Instance);
   }
+#endif
 
   // Emit Swiftdeps for every file in the batch.
   emitSwiftdepsForAllPrimaryInputsIfNeeded(Instance);
@@ -1103,8 +1109,10 @@ static void performEndOfPipelineActions(CompilerInstance &Instance) {
   // Emit Make-style dependencies.
   emitMakeDependenciesIfNeeded(Instance);
 
+#ifndef TINYSWIFT
   // Emit extracted constant values for every file in the batch
   emitConstValuesForAllPrimaryInputsIfNeeded(Instance);
+#endif
 }
 
 static bool printSwiftVersion(const CompilerInvocation &Invocation) {
@@ -1190,7 +1198,9 @@ withSemanticAnalysis(CompilerInstance &Instance, FrontendObserver *observer,
     break;
   }
 
+#ifndef TINYSWIFT
   (void)migrator::updateCodeAndEmitRemapIfNeeded(&Instance);
+#endif
 
   bool hadError = Instance.getASTContext().hadError()
                       && !opts.AllowModuleWithCompilerErrors;
@@ -1240,12 +1250,19 @@ static bool performAction(CompilerInstance &Instance,
                              "removed; use the LLDB-enhanced REPL instead.");
 
   // MARK: Actions for Clang and Clang Modules
+#ifndef TINYSWIFT
   case FrontendOptions::ActionType::EmitPCH:
     return precompileBridgingHeader(Instance);
   case FrontendOptions::ActionType::EmitPCM:
     return precompileClangModule(Instance);
   case FrontendOptions::ActionType::DumpPCM:
     return dumpPrecompiledClangModule(Instance);
+#else
+  case FrontendOptions::ActionType::EmitPCH:
+  case FrontendOptions::ActionType::EmitPCM:
+  case FrontendOptions::ActionType::DumpPCM:
+    llvm::report_fatal_error("Clang module actions not supported in TinySwift");
+#endif
 
   // MARK: Module Interface Actions
   case FrontendOptions::ActionType::CompileModuleFromInterface:
@@ -1310,6 +1327,7 @@ static bool performAction(CompilerInstance &Instance,
                                 [](CompilerInstance &Instance) {
                                   return Instance.getASTContext().hadError();
                                 });
+#ifndef TINYSWIFT
   case FrontendOptions::ActionType::Immediate: {
     const auto &Ctx = Instance.getASTContext();
     if (Ctx.LangOpts.hasFeature(Feature::LazyImmediate)) {
@@ -1323,6 +1341,10 @@ static bool performAction(CompilerInstance &Instance,
           return performCompileStepsPostSema(Instance, ReturnValue, observer);
         });
   }
+#else
+  case FrontendOptions::ActionType::Immediate:
+    llvm::report_fatal_error("Immediate mode is not supported in TinySwift");
+#endif
   case FrontendOptions::ActionType::EmitSILGen:
   case FrontendOptions::ActionType::EmitSIBGen:
   case FrontendOptions::ActionType::EmitSIL:
@@ -1476,6 +1498,7 @@ generateIR(const IRGenOptions &IRGenOpts, const TBDGenOptions &TBDOpts,
   }
 }
 
+#ifndef TINYSWIFT
 static bool processCommandLineAndRunImmediately(CompilerInstance &Instance,
                                                 std::unique_ptr<SILModule> &&SM,
                                                 ModuleOrSourceFile MSF,
@@ -1498,6 +1521,7 @@ static bool processCommandLineAndRunImmediately(CompilerInstance &Instance,
                      std::move(SM));
   return Instance.getASTContext().hadError();
 }
+#endif
 
 static bool validateTBDIfNeeded(const CompilerInvocation &Invocation,
                                 ModuleOrSourceFile MSF,
@@ -1817,9 +1841,11 @@ static bool performCompileStepsPostSILGen(CompilerInstance &Instance,
   if (Action == FrontendOptions::ActionType::DumpTypeInfo)
     return performDumpTypeInfo(IRGenOpts, *SM);
 
+#ifndef TINYSWIFT
   if (Action == FrontendOptions::ActionType::Immediate)
     return processCommandLineAndRunImmediately(
         Instance, std::move(SM), MSF, observer, ReturnValue);
+#endif
 
   StringRef OutputFilename = PSPs.OutputFilename;
   std::vector<std::string> ParallelOutputFilenames =
@@ -1853,6 +1879,7 @@ static bool performCompileStepsPostSILGen(CompilerInstance &Instance,
                       HashGlobal);
 }
 
+#ifndef TINYSWIFT
 static void emitIndexDataForSourceFile(SourceFile *PrimarySourceFile,
                                        const CompilerInstance &Instance) {
   const auto &Invocation = Instance.getInvocation();
@@ -1915,6 +1942,7 @@ static void emitIndexDataForSourceFile(SourceFile *PrimarySourceFile,
                                  Invocation.getIRGenOptions().FilePrefixMap);
   }
 }
+#endif
 
 /// A PrettyStackTraceEntry to print frontend information useful for debugging.
 class PrettyStackTraceFrontend : public llvm::PrettyStackTraceEntry {

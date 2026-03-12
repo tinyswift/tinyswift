@@ -22,9 +22,7 @@
 #include "swift/Basic/LLVM.h"
 #include "swift/Basic/SourceManager.h"
 #include "swift/Bridging/ASTGen.h"
-#ifndef TINYSWIFT
 #include "swift/Markup/Markup.h"
-#endif
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -32,8 +30,11 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace swift;
+#ifndef TINYSWIFT
 using namespace swift::markup;
+#endif
 
+#ifndef TINYSWIFT
 namespace {
 // MARK: Markdown Printing
     class TerminalMarkupPrinter : public MarkupASTVisitor<TerminalMarkupPrinter> {
@@ -228,6 +229,7 @@ namespace {
       }
     }
 } // end anonymous namespace
+#endif // !TINYSWIFT
 
 // MARK: Main DiagnosticConsumer entrypoint.
 void PrintingDiagnosticConsumer::handleDiagnostic(SourceManager &SM,
@@ -267,7 +269,11 @@ void PrintingDiagnosticConsumer::handleDiagnostic(SourceManager &SM,
     if (PrintEducationalNotes) {
       for (auto path : Info.EducationalNotePaths) {
         if (auto buffer = SM.getFileSystem()->getBufferForFile(path)) {
+#ifndef TINYSWIFT
           printMarkdown(buffer->get()->getBuffer(), Stream, ForceColors);
+#else
+          Stream << buffer->get()->getBuffer();
+#endif
           Stream << "\n";
         }
       }
@@ -287,7 +293,11 @@ void PrintingDiagnosticConsumer::flush(bool includeTrailingBreak) {
 #endif
 
   for (auto note : BufferedEducationalNotes) {
+#ifndef TINYSWIFT
     printMarkdown(note, Stream, ForceColors);
+#else
+    Stream << note;
+#endif
     Stream << "\n";
   }
 

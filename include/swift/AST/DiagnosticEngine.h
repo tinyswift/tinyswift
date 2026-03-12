@@ -26,13 +26,12 @@
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/Version.h"
 #include "swift/Basic/WarningAsErrorRule.h"
-#ifndef TINYSWIFT
 #include "swift/Localization/LocalizationFormat.h"
-#endif
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -1110,9 +1109,11 @@ namespace swift {
     /// but rather stored until all transactions complete.
     llvm::StringSet<llvm::BumpPtrAllocator &> TransactionStrings;
 
+#ifndef TINYSWIFT
     /// Diagnostic producer to handle the logic behind retrieving a localized
     /// diagnostic message.
     std::unique_ptr<diag::LocalizationProducer> localization;
+#endif
 
     /// This allocator will retain diagnostic strings containing the
     /// diagnostic's message and identifier as `message [id]` for the duration
@@ -1226,11 +1227,13 @@ namespace swift {
       statsReporter = stats;
     }
 
+#ifndef TINYSWIFT
     void setLocalization(StringRef locale, StringRef path) {
       assert(!locale.empty());
       assert(!path.empty());
       localization = diag::LocalizationProducer::producerFor(locale, path);
     }
+#endif
 
     void ignoreDiagnostic(DiagID id) {
       state.setIgnoredDiagnostic(id, true);

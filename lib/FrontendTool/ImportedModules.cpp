@@ -75,6 +75,7 @@ bool swift::emitImportedModules(ModuleDecl *mainModule,
     Modules.insert(modulePath[0].Item.str());
   }
 
+#ifndef TINYSWIFT
   // And now look in the C code we're possibly using.
   auto clangImporter =
       static_cast<ClangImporter *>(Context.getClangModuleLoader());
@@ -109,6 +110,7 @@ bool swift::emitImportedModules(ModuleDecl *mainModule,
 
     findAllClangImports(clangModule, Modules);
   }
+#endif
 
   for (auto name : Modules) {
     *out << name << "\n";

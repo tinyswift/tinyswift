@@ -22,9 +22,7 @@
 #include "swift/Frontend/PrintingDiagnosticConsumer.h"
 #include "swift/Option/Options.h"
 #include "swift/Parse/ParseVersion.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphGen.h"
-#endif
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,6 +32,10 @@ using namespace options;
 
 int swift_symbolgraph_extract_main(ArrayRef<const char *> Args,
                                    const char *Argv0, void *MainAddr) {
+#ifdef TINYSWIFT
+  llvm::errs() << "Not supported in TinySwift build\n";
+  return 1;
+#else
   INITIALIZE_LLVM();
 
   CompilerInvocation Invocation;
@@ -273,4 +275,5 @@ int swift_symbolgraph_extract_main(ArrayRef<const char *> Args,
   }
 
   return Success;
+#endif // !TINYSWIFT
 }

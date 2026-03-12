@@ -26,19 +26,15 @@
 // can be reflected as source-breaking changes for API users. If they are,
 // the output of api-digester will include such changes.
 
-#ifndef TINYSWIFT
 #include "swift/APIDigester/ModuleAnalyzerNodes.h"
 #include "swift/APIDigester/ModuleDiagsConsumer.h"
-#endif
 #include "swift/AST/DiagnosticsModuleDiffer.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Defer.h"
 #include "swift/Basic/Platform.h"
 #include "swift/Frontend/PrintingDiagnosticConsumer.h"
 #include "swift/Frontend/SerializedDiagnosticConsumer.h"
-#ifndef TINYSWIFT
 #include "swift/IDE/APIDigesterData.h"
-#endif
 #include "swift/Option/Options.h"
 #include "swift/Parse/ParseVersion.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -46,6 +42,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <functional>
 
+#ifndef TINYSWIFT
 using namespace swift;
 using namespace ide;
 using namespace api;
@@ -2676,3 +2673,10 @@ int swift_api_digester_main(ArrayRef<const char *> Args, const char *Argv0,
 
   return EXIT_SUCCESS;
 }
+#else // TINYSWIFT
+int swift_api_digester_main(llvm::ArrayRef<const char *> Args, const char *Argv0,
+                            void *MainAddr) {
+  llvm::errs() << "Not supported in TinySwift build\n";
+  return 1;
+}
+#endif // TINYSWIFT

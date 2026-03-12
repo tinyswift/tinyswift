@@ -33,6 +33,10 @@ using namespace options;
 
 int swift_synthesize_interface_main(ArrayRef<const char *> Args,
                                     const char *Argv0, void *MainAddr) {
+#ifdef TINYSWIFT
+  llvm::errs() << "Not supported in TinySwift build\n";
+  return 1;
+#else
   INITIALIZE_LLVM();
 
   CompilerInvocation Invocation;
@@ -216,4 +220,5 @@ int swift_synthesize_interface_main(ArrayRef<const char *> Args,
                             printOpts, /*PrintSynthesizedExtensions=*/false);
 
   return EXIT_SUCCESS;
+#endif // TINYSWIFT
 }

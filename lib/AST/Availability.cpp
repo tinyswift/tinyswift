@@ -25,9 +25,7 @@
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Platform.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include <map>
 
 using namespace swift;
@@ -497,8 +495,10 @@ Decl::getSemanticUnavailableAttr(bool ignoreAppExtensions) const {
 
 bool Decl::isUnreachableAtRuntime() const {
   // Don't trust unavailability on declarations from clang modules.
+#ifndef TINYSWIFT
   if (isa<ClangModuleUnit>(getDeclContext()->getModuleScopeContext()))
     return false;
+#endif
 
   auto unavailableAttrAndDecl =
       getSemanticUnavailableAttr(/*ignoreAppExtensions=*/true);

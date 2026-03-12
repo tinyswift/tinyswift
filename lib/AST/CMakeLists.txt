@@ -75,6 +75,7 @@ add_swift_host_library(swiftAST STATIC
   NameLookup.cpp
   NameLookupRequests.cpp
   OperatorNameLookup.cpp
+  TinySwiftStubs.cpp
   PackConformance.cpp
   PackExpansionMatcher.cpp
   ParameterPack.cpp

@@ -26,9 +26,7 @@
 #include "swift/AST/USRGeneration.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/Range.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangImporter.h"
-#endif
 #include "swift/Serialization/SerializationOptions.h"
 #include "swift/Serialization/SerializedModuleLoader.h"
 #include "swift/Subsystems.h"
@@ -145,7 +143,6 @@ ModuleFile::loadDependenciesForFileContext(const FileUnit *file,
                                            SourceLoc diagLoc,
                                            bool forTestable) {
   ASTContext &ctx = getContext();
-  auto clangImporter = static_cast<ClangImporter *>(ctx.getClangModuleLoader());
   ModuleDecl *M = file->getParentModule();
 
   bool missingDependency = false;
@@ -156,6 +153,9 @@ ModuleFile::loadDependenciesForFileContext(const FileUnit *file,
     assert(!dependency.isLoaded() && "already loaded?");
 
     if (dependency.isHeader()) {
+#ifndef TINYSWIFT
+      auto clangImporter =
+        static_cast<ClangImporter *>(ctx.getClangModuleLoader());
       // The path may be empty if the file being loaded is a partial AST,
       // and the current compiler invocation is a merge-modules step.
       if (!dependency.Core.RawPath.empty()) {
@@ -172,6 +172,7 @@ ModuleFile::loadDependenciesForFileContext(const FileUnit *file,
       ModuleDecl *importedHeaderModule = clangImporter->getImportedHeaderModule();
       dependency.Import = ImportedModule{ImportPath::Access(),
                                          importedHeaderModule};
+#endif
       continue;
     }
 

@@ -36,9 +36,7 @@
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/StringExtras.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Sema/CSFix.h"
 #include "swift/Sema/ConstraintSystem.h"
 #include "swift/Sema/IDETypeChecking.h"
@@ -10360,13 +10358,16 @@ performMemberLookup(ConstraintKind constraintKind, DeclNameRef memberName,
       if (foundationModule) {
         if (module == foundationModule)
           continue;
-      } else if (ClangModuleUnit::hasClangModule(module) &&
+      }
+#ifndef TINYSWIFT
+      else if (ClangModuleUnit::hasClangModule(module) &&
                  module->getName().str() == "Foundation") {
         // Cache the foundation module name so we don't need to look
         // for it again.
         foundationModule = module;
         continue;
       }
+#endif
       
       addChoice(getOverloadChoice(result.getValueDecl(),
                                   /*isBridged=*/true,

@@ -64,14 +64,10 @@
 #include "swift/Basic/SourceManager.h"
 #include "swift/Basic/Statistic.h"
 #include "swift/Basic/StringExtras.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Strings.h"
 #include "swift/Subsystems.h"
-#ifndef TINYSWIFT
 #include "swift/SymbolGraphGen/SymbolGraphOptions.h"
-#endif
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -5996,6 +5992,7 @@ ASTContext::getForeignRepresentationInfo(NominalTypeDecl *nominal,
       addTrivial(Id_CGFloat, coreFoundation);
     }
 
+#ifndef TINYSWIFT
     // Pull SIMD types of size 2...4 from the SIMD module, if it exists.
     if (auto simd = getLoadedModule(Id_simd)) {
 #define MAP_SIMD_TYPE(BASENAME, _, __)                                  \
@@ -6006,8 +6003,9 @@ ASTContext::getForeignRepresentationInfo(NominalTypeDecl *nominal,
           addTrivial(getIdentifier(name), simd);                        \
         }                                                               \
       }
-#include "swift/ClangImporter/SIMDMappedTypes.def"      
+#include "swift/ClangImporter/SIMDMappedTypes.def"
     }
+#endif
   }
 
   // Determine whether we know anything about this nominal type
@@ -6043,6 +6041,7 @@ ASTContext::getForeignRepresentationInfo(NominalTypeDecl *nominal,
   conditionallyAddTrivial(nominal, getSwiftId(KnownFoundationEntity::NSZone), Id_ObjectiveC, true);
   conditionallyAddTrivial(nominal, Id_CGFloat, getIdentifier("CoreGraphics"));
   conditionallyAddTrivial(nominal, Id_CGFloat, getIdentifier("CoreFoundation"));
+#ifndef TINYSWIFT
 #define MAP_SIMD_TYPE(BASENAME, _, __)                                         \
   {                                                                            \
     char name[] = #BASENAME "0";                                               \
@@ -6052,6 +6051,7 @@ ASTContext::getForeignRepresentationInfo(NominalTypeDecl *nominal,
     }                                                                          \
   }
 #include "swift/ClangImporter/SIMDMappedTypes.def"
+#endif
 
   if (wasNotFoundInCache ||
       (known->second.getKind() == ForeignRepresentableKind::None &&
@@ -6909,12 +6909,15 @@ Type ASTContext::getNamedSwiftType(ModuleDecl *module, StringRef name) {
   // Check if the lookup we're about to perform a lookup within is
   // a Clang module.
   for (auto *file : module->getFiles()) {
+#ifndef TINYSWIFT
     if (auto clangUnit = dyn_cast<ClangModuleUnit>(file)) {
       // If we have an overlay, look in the overlay. Otherwise, skip
       // the lookup to avoid infinite recursion.
       if (auto module = clangUnit->getOverlayModule())
         module->lookupValue(identifier, NLKind::UnqualifiedLookup, results);
-    } else {
+    } else
+#endif
+    {
       file->lookupValue(identifier, NLKind::UnqualifiedLookup, { }, results);
     }
   }

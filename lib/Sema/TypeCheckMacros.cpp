@@ -42,9 +42,7 @@
 #include "swift/Basic/StringExtras.h"
 #include "swift/Bridging/ASTGen.h"
 #include "swift/Bridging/MacroEvaluation.h"
-#ifndef TINYSWIFT
 #include "swift/ClangImporter/ClangModule.h"
-#endif
 #include "swift/Demangling/Demangler.h"
 #include "swift/Demangling/ManglingMacros.h"
 #include "swift/Parse/Lexer.h"
@@ -1036,11 +1034,13 @@ createMacroSourceFile(std::unique_ptr<llvm::MemoryBuffer> buffer,
       /*parsingOpts=*/{}, /*isPrimary=*/false);
   if (auto parentSourceFile = dc->getParentSourceFile())
     macroSourceFile->setImports(parentSourceFile->getImports());
+#ifndef TINYSWIFT
   else if (auto clangModuleUnit =
                dyn_cast<ClangModuleUnit>(dc->getModuleScopeContext())) {
     auto clangModule = clangModuleUnit->getParentModule();
     performImportResolutionForClangMacroBuffer(*macroSourceFile, clangModule);
   }
+#endif
   return macroSourceFile;
 }
 
@@ -1370,11 +1370,13 @@ static SourceFile *evaluateAttachedMacro(MacroDecl *macro, Decl *attachedTo,
   // pretty-print the declaration and use that location.
   SourceLoc attachedToLoc = attachedTo->getLoc();
   bool isPrettyPrintedDecl = false;
+#ifndef TINYSWIFT
   if (isa<ClangModuleUnit>(dc->getModuleScopeContext())) {
     isPrettyPrintedDecl = true;
     attachedToLoc = evaluateOrDefault(
         ctx.evaluator, PrettyPrintDeclRequest{attachedTo}, SourceLoc());
   }
+#endif
 
   SourceFile *declSourceFile =
       moduleDecl->getSourceFileContainingLocation(attachedToLoc);
