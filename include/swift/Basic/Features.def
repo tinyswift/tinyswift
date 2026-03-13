@@ -346,6 +346,9 @@ EXPERIMENTAL_FEATURE(RawLayout, true)
 /// Enables the "embedded" swift mode (no runtime).
 EXPERIMENTAL_FEATURE(Embedded, true)
 
+/// Enables TinySwift mode (value-type-only subset, implies Embedded).
+EXPERIMENTAL_FEATURE(TinySwift, true)
+
 /// Enables importing the Volatile module
 EXPERIMENTAL_FEATURE(Volatile, true)
 

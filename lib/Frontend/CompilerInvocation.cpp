@@ -1684,6 +1684,11 @@ static bool ParseLangArgs(LangOptions &Opts, ArgList &Args,
   }
   Opts.BypassResilienceChecks |= Args.hasArg(OPT_bypass_resilience);
 
+  if (Opts.hasFeature(Feature::TinySwift)) {
+    if (!Opts.hasFeature(Feature::Embedded))
+      Opts.enableFeature(Feature::Embedded);
+  }
+
   if (Opts.hasFeature(Feature::Embedded)) {
     Opts.UnavailableDeclOptimizationMode = UnavailableDeclOptimization::Complete;
     Opts.DisableImplicitStringProcessingModuleImport = true;
@@ -3825,6 +3830,8 @@ bool CompilerInvocation::parseArgs(
     SILOpts.SkipFunctionBodies = FunctionBodySkipping::None;
     SILOpts.CMOMode = CrossModuleOptimizationMode::Everything;
     SILOpts.EmbeddedSwift = true;
+    if (LangOpts.hasFeature(Feature::TinySwift))
+      SILOpts.TinySwift = true;
     SILOpts.UseAggressiveReg2MemForCodeSize = true;
     // OSSA modules are required for deinit de-virtualization.
     SILOpts.EnableOSSAModules = true;

@@ -302,6 +302,9 @@ public:
   /// Are we building in embedded Swift mode?
   bool EmbeddedSwift = false;
 
+  /// Are we building in TinySwift mode?
+  bool TinySwift = false;
+
   /// Are we building in embedded Swift + -no-allocations?
   bool NoAllocations = false;
 
