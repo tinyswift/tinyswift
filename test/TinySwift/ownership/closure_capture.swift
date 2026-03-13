@@ -14,6 +14,6 @@ func useClosure(_ fn: () -> ()) {
 func testCapture() {
   let d = Data(value: Builtin.zeroInitializer())
   useClosure {
-    _ = d.value
+    let _ = d.value
   }
 }

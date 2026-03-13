@@ -234,8 +234,12 @@ static bool canonicalizeLoadBorrows(SILFunction *F) {
 
 class MoveOnlyCheckerPass : public SILFunctionTransform {
   /// In TinySwift mode, inject MarkUnresolvedNonCopyableValueInst for
-  /// all non-trivial types. This makes the existing move-only checker
-  /// enforce ownership for ALL non-trivial types in TinySwift.
+  /// non-trivial types that are already move-only. This makes the existing
+  /// move-only checker enforce ownership diagnostics for ~Copyable types.
+  ///
+  /// Types that are non-trivial but not move-only (generic type params,
+  /// closure types) are handled by OSSA preservation through IRGen and the
+  /// TinySwiftVerifier safety net — they don't need move-only markers.
   bool injectTinySwiftMoveOnlyMarkers(SILFunction *fn) {
     if (!fn->getModule().getOptions().TinySwift)
       return false;
@@ -246,6 +250,11 @@ class MoveOnlyCheckerPass : public SILFunctionTransform {
     for (auto &bb : *fn) {
       for (auto *arg : bb.getArguments()) {
         if (arg->getType().isTrivial(*fn))
+          continue;
+        // Only inject markers for types that are already move-only.
+        // Generic params and closures are non-trivial but not move-only;
+        // they are handled by OSSA and the TinySwift verifier instead.
+        if (!arg->getType().isMoveOnly())
           continue;
         // Check if already marked.
         bool alreadyMarked = false;

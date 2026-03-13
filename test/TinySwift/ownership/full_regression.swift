@@ -49,8 +49,9 @@ func identity(_ x: Builtin.Int64) -> Builtin.Int64 {
   return x
 }
 
-// Note: closure parameters crash MoveOnlyChecker in -parse-stdlib mode
-// (pre-existing Phase 2 issue). Tested at typecheck level instead.
+func applyToZero(_ f: (Builtin.Int64) -> Builtin.Int64) -> Builtin.Int64 {
+  return f(Builtin.zeroInitializer())
+}
 
 // --- Arithmetic ---
 
