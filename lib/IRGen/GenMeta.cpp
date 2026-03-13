@@ -2838,6 +2838,10 @@ void irgen::emitLazyTypeContextDescriptor(IRGenModule &IGM,
 }
 
 void irgen::emitLazyTypeMetadata(IRGenModule &IGM, NominalTypeDecl *type) {
+  // TinySwift: no type metadata emission.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    return;
+
   eraseExistingTypeContextDescriptor(IGM, type);
 
   if (requiresForeignTypeMetadata(type)) {
@@ -6027,6 +6031,10 @@ namespace {
 
 /// Emit the type metadata or metadata template for a struct.
 void irgen::emitStructMetadata(IRGenModule &IGM, StructDecl *structDecl) {
+  // TinySwift: no type metadata emission.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    return;
+
   PrettyStackTraceDecl stackTraceRAII("emitting metadata for", structDecl);
   ConstantInitBuilder initBuilder(IGM);
   auto init = initBuilder.beginStruct();
@@ -6058,6 +6066,10 @@ void irgen::emitStructMetadata(IRGenModule &IGM, StructDecl *structDecl) {
 
 void irgen::emitSpecializedGenericStructMetadata(IRGenModule &IGM, CanType type,
                                                  StructDecl &decl) {
+  // TinySwift: no type metadata emission.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    return;
+
   Type ty = type.getPointer();
   auto &context = type->getNominalOrBoundGenericNominal()->getASTContext();
   PrettyStackTraceType stackTraceRAII(
@@ -6440,6 +6452,10 @@ namespace {
 } // end anonymous namespace
 
 void irgen::emitEnumMetadata(IRGenModule &IGM, EnumDecl *theEnum) {
+  // TinySwift: no type metadata emission.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    return;
+
   PrettyStackTraceDecl stackTraceRAII("emitting metadata for", theEnum);
   ConstantInitBuilder initBuilder(IGM);
   auto init = initBuilder.beginStruct();
@@ -6471,6 +6487,10 @@ void irgen::emitEnumMetadata(IRGenModule &IGM, EnumDecl *theEnum) {
 
 void irgen::emitSpecializedGenericEnumMetadata(IRGenModule &IGM, CanType type,
                                                EnumDecl &decl) {
+  // TinySwift: no type metadata emission.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    return;
+
   assert(decl.isGenericContext());
   Type ty = type.getPointer();
   auto &context = type->getNominalOrBoundGenericNominal()->getASTContext();
@@ -6856,6 +6876,10 @@ bool irgen::requiresForeignTypeMetadata(NominalTypeDecl *decl) {
 }
 
 void irgen::emitForeignTypeMetadata(IRGenModule &IGM, NominalTypeDecl *decl) {
+  // TinySwift: no type metadata emission.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    return;
+
   auto type = decl->getDeclaredType()->getCanonicalType();
 
   // Create a temporary base for relative references.
