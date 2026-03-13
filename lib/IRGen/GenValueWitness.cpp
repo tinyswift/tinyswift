@@ -1536,6 +1536,12 @@ ConstantReference irgen::emitValueWitnessTable(IRGenModule &IGM,
                                              CanType abstractType,
                                              bool isPattern,
                                              bool relativeReference) {
+  // TinySwift: no value witness tables are emitted. Return a null reference.
+  if (IGM.getSILModule().getOptions().TinySwift) {
+    return ConstantReference(
+        llvm::ConstantPointerNull::get(IGM.Int8PtrTy), ConstantReference::Direct);
+  }
+
   // See if we can use a prefab witness table from the runtime.
   if (!isPattern) {
     if (auto known = getAddrOfKnownValueWitnessTable(IGM, abstractType,

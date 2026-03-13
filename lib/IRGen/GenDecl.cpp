@@ -1290,12 +1290,20 @@ void IRGenerator::emitSwiftProtocols() {
 }
 
 void IRGenerator::emitProtocolConformances() {
+  // TinySwift: no protocol conformance records.
+  if (SIL.getOptions().TinySwift)
+    return;
+
   for (auto &m : *this) {
     m.second->emitProtocolConformances(/*asContiguousArray*/ false);
   }
 }
 
 void IRGenerator::emitTypeMetadataRecords() {
+  // TinySwift: no type metadata records.
+  if (SIL.getOptions().TinySwift)
+    return;
+
   for (auto &m : *this) {
     m.second->emitTypeMetadataRecords(/*asContiguousArray*/ false);
   }
@@ -1519,6 +1527,10 @@ void IRGenerator::addLazyFunction(SILFunction *f) {
 }
 
 bool IRGenerator::hasLazyMetadata(TypeDecl *type) {
+  // TinySwift: no metadata is ever lazy-emitted.
+  if (SIL.getOptions().TinySwift)
+    return false;
+
   assert(isa<NominalTypeDecl>(type) ||
          isa<OpaqueTypeDecl>(type));
   auto found = HasLazyMetadata.find(type);
@@ -4434,6 +4446,10 @@ void IRGenModule::addAccessibleFunction(AccessibleFunction func) {
 /// true, otherwise the records are emitted as individual globals and
 /// nullptr is returned).
 llvm::Constant *IRGenModule::emitProtocolConformances(bool asContiguousArray) {
+  // TinySwift: no protocol conformance records.
+  if (getSILModule().getOptions().TinySwift)
+    return nullptr;
+
   if (ProtocolConformances.empty())
     return nullptr;
 
@@ -4524,6 +4540,10 @@ llvm::Constant *IRGenModule::emitProtocolConformances(bool asContiguousArray) {
 /// otherwise the descriptors are emitted as individual globals and nullptr is
 /// returned).
 llvm::Constant *IRGenModule::emitTypeMetadataRecords(bool asContiguousArray) {
+  // TinySwift: no type metadata records.
+  if (getSILModule().getOptions().TinySwift)
+    return nullptr;
+
   if (RuntimeResolvableTypes.empty()
       && RuntimeResolvableTypes2.empty())
     return nullptr;
