@@ -2447,6 +2447,12 @@ public:
   }
 
   void visitMacroDecl(MacroDecl *MD) {
+    // TinySwift: reject macro declarations.
+    if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+      MD->diagnose(diag::macros_not_supported_in_tinyswift);
+      return;
+    }
+
     TypeChecker::checkDeclAttributes(MD);
     checkAccessControl(MD);
 
@@ -2526,6 +2532,12 @@ public:
   }
 
   void visitMacroExpansionDecl(MacroExpansionDecl *MED) {
+    // TinySwift: reject macro expansions.
+    if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+      MED->diagnose(diag::macros_not_supported_in_tinyswift);
+      return;
+    }
+
     // Assign a discriminator.
     (void)MED->getDiscriminator();
     MED->forEachExpandedNode([&](ASTNode node) {
@@ -3136,6 +3148,19 @@ public:
   }
 
   void visitEnumDecl(EnumDecl *ED) {
+    // TinySwift: reject indirect enums.
+    if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+      if (ED->isIndirect()) {
+        ED->diagnose(diag::indirect_enum_not_supported_in_tinyswift);
+      } else {
+        for (auto *elt : ED->getAllElements()) {
+          if (elt->isIndirect()) {
+            elt->diagnose(diag::indirect_enum_not_supported_in_tinyswift);
+          }
+        }
+      }
+    }
+
     checkUnsupportedNestedType(ED);
 
     // Force creation of the generic signature.
@@ -3375,6 +3400,16 @@ public:
   }
 
   void visitClassDecl(ClassDecl *CD) {
+    // TinySwift: reject classes and actors early.
+    if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+      if (CD->isActor()) {
+        CD->diagnose(diag::actor_not_supported_in_tinyswift);
+      } else {
+        CD->diagnose(diag::class_not_supported_in_tinyswift);
+      }
+      return;
+    }
+
     checkUnsupportedNestedType(CD);
 
     // Force creation of the generic signature.
@@ -3620,6 +3655,16 @@ public:
   }
 
   void visitFuncDecl(FuncDecl *FD) {
+    // TinySwift: reject async functions and bare throws.
+    if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+      if (FD->hasAsync()) {
+        FD->diagnose(diag::concurrency_not_supported_in_tinyswift);
+      }
+      if (FD->hasThrows() && !FD->getThrownInterfaceType()) {
+        FD->diagnose(diag::bare_throws_not_supported_in_tinyswift);
+      }
+    }
+
     // Force these requests in case they emit diagnostics.
     (void) FD->getInterfaceType();
     (void) FD->getOperatorDecl();
@@ -4043,6 +4088,16 @@ public:
   }
 
   void visitConstructorDecl(ConstructorDecl *CD) {
+    // TinySwift: reject async constructors and bare throws.
+    if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+      if (CD->hasAsync()) {
+        CD->diagnose(diag::concurrency_not_supported_in_tinyswift);
+      }
+      if (CD->hasThrows() && !CD->getThrownInterfaceType()) {
+        CD->diagnose(diag::bare_throws_not_supported_in_tinyswift);
+      }
+    }
+
     // Force creation of the generic signature.
     (void) CD->getGenericSignature();
     dumpGenericSignature(Ctx, CD);
