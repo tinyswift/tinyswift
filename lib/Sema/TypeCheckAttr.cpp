@@ -746,6 +746,12 @@ static bool isRelaxedIBAction(ASTContext &ctx) {
 }
 
 void AttributeChecker::visitIBActionAttr(IBActionAttr *attr) {
+  // TinySwift: reject @IBAction.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::objc_not_supported_in_tinyswift);
+    return;
+  }
+
   // Only instance methods can be IBActions.
   const FuncDecl *FD = cast<FuncDecl>(D);
   if (!FD->isPotentialIBActionTarget()) {
@@ -844,6 +850,12 @@ void AttributeChecker::visitIBSegueActionAttr(IBSegueActionAttr *attr) {
 }
 
 void AttributeChecker::visitIBDesignableAttr(IBDesignableAttr *attr) {
+  // TinySwift: reject @IBDesignable.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::objc_not_supported_in_tinyswift);
+    return;
+  }
+
   if (auto *ED = dyn_cast<ExtensionDecl>(D)) {
     if (auto nominalDecl = ED->getExtendedNominal()) {
       if (!isa<ClassDecl>(nominalDecl))
@@ -853,6 +865,12 @@ void AttributeChecker::visitIBDesignableAttr(IBDesignableAttr *attr) {
 }
 
 void AttributeChecker::visitIBInspectableAttr(IBInspectableAttr *attr) {
+  // TinySwift: reject @IBInspectable.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::objc_not_supported_in_tinyswift);
+    return;
+  }
+
   // Only instance properties can be 'IBInspectable'.
   auto *VD = cast<VarDecl>(D);
   if (!VD->getDeclContext()->getSelfClassDecl() || VD->isStatic())
@@ -910,6 +928,12 @@ isAcceptableOutletType(Type type, bool &isArray, ASTContext &ctx) {
 }
 
 void AttributeChecker::visitIBOutletAttr(IBOutletAttr *attr) {
+  // TinySwift: reject @IBOutlet.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::objc_not_supported_in_tinyswift);
+    return;
+  }
+
   // Only instance properties can be 'IBOutlet'.
   auto *VD = cast<VarDecl>(D);
   if (!VD->getDeclContext()->getSelfClassDecl() || VD->isStatic())
@@ -1107,6 +1131,14 @@ bool AttributeChecker::visitAbstractAccessControlAttr(
 }
 
 void AttributeChecker::visitAccessControlAttr(AccessControlAttr *attr) {
+  // TinySwift: reject 'open' access level.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift) &&
+      attr->getAccess() == AccessLevel::Open) {
+    diagnose(attr->getLocation(), diag::open_access_not_supported_in_tinyswift)
+      .fixItReplace(attr->getRange(), "public");
+    return;
+  }
+
   visitAbstractAccessControlAttr(attr);
 
   if (auto extension = dyn_cast<ExtensionDecl>(D)) {
@@ -1391,6 +1423,12 @@ static void diagnoseObjCAttrWithoutFoundation(DeclAttribute *attr, Decl *decl,
 }
 
 void AttributeChecker::visitObjCAttr(ObjCAttr *attr) {
+  // TinySwift: reject @objc.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::objc_not_supported_in_tinyswift);
+    return;
+  }
+
   auto reason = objCReasonForObjCAttr(attr);
   auto behavior = behaviorLimitForObjCReason(reason, Ctx);
 
