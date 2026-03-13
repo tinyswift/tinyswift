@@ -1251,6 +1251,10 @@ emitConditionalConformancesBuffer(IRGenFunction &IGF,
 static llvm::Value *emitWitnessTableAccessorCall(
     IRGenFunction &IGF, const ProtocolConformance *conformance,
     llvm::Value **srcMetadataCache) {
+  // TinySwift: witness table accessors are never called.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitWitnessTableAccessorCall reached in TinySwift mode");
+
   auto conformanceDescriptor =
     IGF.IGM.getAddrOfProtocolConformanceDescriptor(
                                              conformance->getRootConformance());
@@ -2392,6 +2396,10 @@ namespace {
 
 void IRGenModule::emitProtocolConformance(
                                 const ConformanceDescription &record) {
+  // TinySwift: no protocol conformance descriptors.
+  if (getSILModule().getOptions().TinySwift)
+    return;
+
   auto conformance = record.conformance;
 
   // Emit additional metadata to be used by reflection.
@@ -3657,6 +3665,12 @@ void NecessaryBindings::save(IRGenFunction &IGF, Address buffer) const {
 llvm::Value *irgen::emitWitnessTableRef(IRGenFunction &IGF,
                                         CanType srcType,
                                         ProtocolConformanceRef conformance) {
+  // TinySwift: witness tables are never emitted; this path should be
+  // unreachable because Sema rejects existentials and generics are
+  // fully specialized.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitWitnessTableRef reached in TinySwift mode");
+
   llvm::Value *srcMetadataCache = nullptr;
   return emitWitnessTableRef(IGF, srcType, &srcMetadataCache, conformance);
 }
@@ -3666,6 +3680,10 @@ llvm::Value *irgen::emitWitnessTableRef(IRGenFunction &IGF,
                                         CanType srcType,
                                         llvm::Value **srcMetadataCache,
                                         ProtocolConformanceRef conformance) {
+  // TinySwift: witness tables are never emitted.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitWitnessTableRef reached in TinySwift mode");
+
   auto proto = conformance.getRequirement();
 
   // In Embedded Swift, only class-bound wtables are allowed.

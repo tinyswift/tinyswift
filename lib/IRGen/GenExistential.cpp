@@ -1929,6 +1929,10 @@ void irgen::emitClassExistentialContainer(IRGenFunction &IGF,
                                CanType instanceFormalType,
                                SILType instanceLoweredType,
                                ArrayRef<ProtocolConformanceRef> conformances) {
+  // TinySwift: existential containers should never be created.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitClassExistentialContainer in TinySwift mode");
+
   // As a special case, an Error existential can be represented as a
   // reference to an already existing NSError or CFError instance.
   if (outType.isExistentialType()) {
@@ -1980,6 +1984,11 @@ Address irgen::emitOpaqueExistentialContainerInit(IRGenFunction &IGF,
                                   CanType formalSrcType,
                                   SILType loweredSrcType,
                                   ArrayRef<ProtocolConformanceRef> conformances) {
+  // TinySwift: existential containers should never be created (Sema rejects
+  // existentials). If this is reached, something went wrong.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitOpaqueExistentialContainerInit in TinySwift mode");
+
   assert(!destType.isClassExistentialType() &&
          "initializing a class existential container as opaque");
   auto &destTI = IGF.getTypeInfo(destType).as<OpaqueExistentialTypeInfo>();
@@ -2013,6 +2022,10 @@ void irgen::emitExistentialMetatypeContainer(IRGenFunction &IGF,
                                Explosion &out, SILType outType,
                                llvm::Value *metatype, SILType metatypeType,
                                ArrayRef<ProtocolConformanceRef> conformances) {
+  // TinySwift: existential metatype containers should never be created.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitExistentialMetatypeContainer in TinySwift mode");
+
   assert(outType.is<ExistentialMetatypeType>());
   auto &destTI = IGF.getTypeInfo(outType).as<ExistentialMetatypeTypeInfo>();
   out.add(metatype);
