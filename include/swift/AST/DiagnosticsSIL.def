@@ -1143,5 +1143,9 @@ ERROR(tinyswift_implicit_copy_of_nontrivial,none,
 ERROR(tinyswift_escaping_capture,none,
       "closure captures non-trivial value in TinySwift; captured values must be consumed or borrowed explicitly", ())
 
+// TinySwift generic specialization diagnostics
+ERROR(tinyswift_unspecialized_generic,none,
+      "generic function '%0' could not be fully specialized in TinySwift; all generic types must be concrete", (StringRef))
+
 #define UNDEFINE_DIAGNOSTIC_MACROS
 #include "DefineDiagnosticMacros.h"

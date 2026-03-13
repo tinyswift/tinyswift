@@ -943,6 +943,14 @@ SILPassPipelinePlan::getLoweringPassPipeline(const SILOptions &Options) {
   if (!P.getOptions().TinySwift)
     P.addOwnershipModelEliminator();
   P.addAlwaysEmitConformanceMetadataPreservation();
+
+  // TinySwift: run mandatory generic specialization and verify all generics
+  // are fully monomorphized before IRGen.
+  if (P.getOptions().TinySwift) {
+    P.addGenericSpecializer();
+    P.addTinySwiftGenericSpecializationVerifier();
+  }
+
   P.addIRGenPrepare();
 
   return P;

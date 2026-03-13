@@ -494,6 +494,8 @@ PASS(DebugInfoCanonicalizer, "sil-onone-debuginfo-canonicalizer",
      "Canonicalize debug info at -Onone by propagating debug info into coroutine funclets")
 PASS(TinySwiftVerifier, "tinyswift-verifier",
      "Verify No ARC Instructions in TinySwift Mode")
+PASS(TinySwiftGenericSpecializationVerifier, "tinyswift-generic-specialization-verifier",
+     "Verify All Generic Functions Are Fully Specialized in TinySwift Mode")
 PASS(PartialApplySimplification, "partial-apply-simplification",
      "Transform partial_apply instructions into explicit closure box constructions")
 PASS(RegionAnalysisInvalidationTransform, "region-analysis-invalidation-transform",
