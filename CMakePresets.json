@@ -44,11 +44,59 @@
         "LLVM_ENABLE_ASSERTIONS": "OFF",
         "SWIFT_INCLUDE_TESTS": "OFF"
       }
+    },
+    {
+      "name": "tinyswift-embedded-arm64",
+      "displayName": "TinySwift Embedded ARM64",
+      "description": "Cross-compilation for aarch64-none-elf bare-metal targets",
+      "inherits": "tinyswift-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LLVM_ENABLE_ASSERTIONS": "OFF",
+        "SWIFT_INCLUDE_TESTS": "OFF",
+        "LLVM_TARGETS_TO_BUILD": "AArch64",
+        "SWIFT_SDKS": "",
+        "SWIFT_PRIMARY_VARIANT_SDK": "NONE",
+        "SWIFT_PRIMARY_VARIANT_ARCH": "aarch64"
+      }
+    },
+    {
+      "name": "tinyswift-embedded-riscv",
+      "displayName": "TinySwift Embedded RISC-V",
+      "description": "Cross-compilation for riscv32-none-elf bare-metal targets",
+      "inherits": "tinyswift-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LLVM_ENABLE_ASSERTIONS": "OFF",
+        "SWIFT_INCLUDE_TESTS": "OFF",
+        "LLVM_TARGETS_TO_BUILD": "RISCV",
+        "SWIFT_SDKS": "",
+        "SWIFT_PRIMARY_VARIANT_SDK": "NONE",
+        "SWIFT_PRIMARY_VARIANT_ARCH": "riscv32"
+      }
+    },
+    {
+      "name": "tinyswift-embedded-wasm",
+      "displayName": "TinySwift Embedded WebAssembly",
+      "description": "Cross-compilation for wasm32-unknown-wasi targets",
+      "inherits": "tinyswift-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LLVM_ENABLE_ASSERTIONS": "OFF",
+        "SWIFT_INCLUDE_TESTS": "OFF",
+        "LLVM_TARGETS_TO_BUILD": "WebAssembly",
+        "SWIFT_SDKS": "",
+        "SWIFT_PRIMARY_VARIANT_SDK": "NONE",
+        "SWIFT_PRIMARY_VARIANT_ARCH": "wasm32"
+      }
     }
   ],
   "buildPresets": [
     { "name": "tinyswift-debug", "configurePreset": "tinyswift-debug", "jobs": 8 },
-    { "name": "tinyswift-release", "configurePreset": "tinyswift-release", "jobs": 8 }
+    { "name": "tinyswift-release", "configurePreset": "tinyswift-release", "jobs": 8 },
+    { "name": "tinyswift-embedded-arm64", "configurePreset": "tinyswift-embedded-arm64", "jobs": 8 },
+    { "name": "tinyswift-embedded-riscv", "configurePreset": "tinyswift-embedded-riscv", "jobs": 8 },
+    { "name": "tinyswift-embedded-wasm", "configurePreset": "tinyswift-embedded-wasm", "jobs": 8 }
   ],
   "testPresets": [
     {

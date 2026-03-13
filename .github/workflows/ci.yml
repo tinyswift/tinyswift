@@ -37,7 +37,24 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=sccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
           cmake --build --preset tinyswift-debug
+      - name: Run TinySwift smoke tests
+        run: |
+          FAIL=0
+          for f in test/TinySwift/smoke/*.swift; do
+            echo "=== Smoke: $f ==="
+            if build/tinyswift-debug/bin/swift-frontend -typecheck \
+              -enable-experimental-feature Embedded -parse-stdlib "$f"; then
+              echo "PASS"
+            else
+              echo "FAIL"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+      - name: Forbidden symbol check
+        run: ./scripts/check-forbidden-symbols.sh build/tinyswift-debug/bin/swift-frontend
       - uses: actions/upload-artifact@v4
+        if: always()
         with: { name: tinyswiftc-macos, path: "build/tinyswift-debug/bin/", retention-days: 7 }
 
   build-linux:
@@ -62,5 +79,22 @@ jobs:
             -DCMAKE_CXX_COMPILER=${{ runner.temp }}/llvm/bin/clang++ \
             -DLLVM_DIR=${{ runner.temp }}/llvm/lib/cmake/llvm
           cmake --build --preset tinyswift-debug
+      - name: Run TinySwift smoke tests
+        run: |
+          FAIL=0
+          for f in test/TinySwift/smoke/*.swift; do
+            echo "=== Smoke: $f ==="
+            if build/tinyswift-debug/bin/swift-frontend -typecheck \
+              -enable-experimental-feature Embedded -parse-stdlib "$f"; then
+              echo "PASS"
+            else
+              echo "FAIL"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+      - name: Forbidden symbol check
+        run: ./scripts/check-forbidden-symbols.sh build/tinyswift-debug/bin/swift-frontend
       - uses: actions/upload-artifact@v4
+        if: always()
         with: { name: tinyswiftc-linux, path: "build/tinyswift-debug/bin/", retention-days: 7 }
