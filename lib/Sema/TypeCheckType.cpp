@@ -5848,6 +5848,12 @@ TypeResolver::resolveCompositionType(CompositionTypeRepr *repr,
   }
 
   if (options.isConstraintImplicitExistential()) {
+    // TinySwift: reject implicit existential from protocol composition.
+    if (getASTContext().LangOpts.hasFeature(Feature::TinySwift)) {
+      diagnose(repr->getSourceRange().Start,
+               diag::existential_not_supported_in_tinyswift);
+      return ErrorType::get(getASTContext());
+    }
     return ExistentialType::get(composition);
   }
 
@@ -5857,6 +5863,12 @@ TypeResolver::resolveCompositionType(CompositionTypeRepr *repr,
 NeverNullType
 TypeResolver::resolveExistentialType(ExistentialTypeRepr *repr,
                                      TypeResolutionOptions options) {
+  // TinySwift: reject existential types ('any Protocol').
+  if (getASTContext().LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnose(repr->getLoc(), diag::existential_not_supported_in_tinyswift);
+    return ErrorType::get(getASTContext());
+  }
+
   auto constraintType = resolveType(repr->getConstraint(),
       options.withContext(TypeResolverContext::ExistentialConstraint));
   if (constraintType->is<ExistentialMetatypeType>())

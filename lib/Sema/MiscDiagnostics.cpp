@@ -102,6 +102,15 @@ static void diagSyntacticUseRestrictions(const Expr *E, const DeclContext *DC,
     }
 
     PreWalkResult<Expr *> walkToExprPre(Expr *E) override {
+      // TinySwift: reject dynamic casts (as? and as!).
+      if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+        if (isa<ForcedCheckedCastExpr>(E) ||
+            isa<ConditionalCheckedCastExpr>(E)) {
+          Ctx.Diags.diagnose(E->getLoc(),
+                             diag::dynamic_cast_not_supported_in_tinyswift);
+        }
+      }
+
       // See through implicit conversions of the expression.  We want to be able
       // to associate the parent of this expression with the ultimate callee.
       auto Base = E;
