@@ -72,6 +72,24 @@ def main():
         semihosting = False
         qemu_mode = "-bios none -kernel"
         always_optimize_for_size = True
+    elif args.device == "aarch64-qemu-virt":
+        target = "aarch64-none-elf"
+        qemu_binary = "qemu-system-aarch64"
+        qemu_machine = "virt"
+        mmcu = ""
+        entry_point = "start"
+        semihosting = False
+        qemu_mode = "-bios none -kernel"
+        always_optimize_for_size = True
+    elif args.device == "wasm32-wasi":
+        target = "wasm32-unknown-wasi"
+        qemu_binary = "wasmtime"
+        qemu_machine = ""
+        mmcu = ""
+        entry_point = "_start"
+        semihosting = False
+        qemu_mode = ""
+        always_optimize_for_size = True
     else:
         assert False
 
@@ -128,8 +146,17 @@ def main():
             print("Must specify --elf-file <...>")
             exit(1)
 
-        qemu_command = f"{qemu_binary} -M {qemu_machine} -nographic {qemu_mode} {args.elf_file} {'-semihosting' if semihosting else ''}"
-        shell_print(f"expect -c 'spawn {qemu_command}; expect -timeout 5 -re \"HALT\"'")
+        if args.device == "wasm32-wasi":
+            # WASI targets run with wasmtime directly
+            qemu_command = f"wasmtime {args.elf_file}"
+            shell_print(f"expect -c 'spawn {qemu_command}; expect -timeout 5 -re \"HALT\"'")
+        elif args.device == "aarch64-qemu-virt":
+            # AArch64 QEMU virt: use -cpu cortex-a53 for AArch64 support
+            qemu_command = f"{qemu_binary} -M {qemu_machine} -cpu cortex-a53 -nographic {qemu_mode} {args.elf_file}"
+            shell_print(f"expect -c 'spawn {qemu_command}; expect -timeout 5 -re \"HALT\"'")
+        else:
+            qemu_command = f"{qemu_binary} -M {qemu_machine} -nographic {qemu_mode} {args.elf_file} {'-semihosting' if semihosting else ''}"
+            shell_print(f"expect -c 'spawn {qemu_command}; expect -timeout 5 -re \"HALT\"'")
 
     elif args.command == "demo-run":
         elffile = tmpdir + "/" + target + ".elf"

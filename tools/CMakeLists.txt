@@ -21,6 +21,10 @@ add_swift_tool_subdirectory(swift-compatibility-symbols)
 add_swift_tool_subdirectory(swift-demangle)
 add_swift_tool_subdirectory(swift-demangle-yamldump)
 
+if(TINYSWIFT_BUILD)
+  add_subdirectory(driver/tinyswiftc)
+endif()
+
 if(NOT TINYSWIFT_BUILD)
   add_swift_tool_subdirectory(swift-def-to-strings-converter)
   add_swift_tool_subdirectory(swift-serialize-diagnostics)

@@ -313,15 +313,19 @@ void swift::performLLVMOptimizations(const IRGenOptions &Opts,
   PB.setEnableHotColdSplitting(DoHotColdSplit);
 
   if (RunSwiftSpecificLLVMOptzns) {
+#ifndef TINYSWIFT
     PB.registerScalarOptimizerLateEPCallback(
         [](FunctionPassManager &FPM, OptimizationLevel Level) {
           if (Level != OptimizationLevel::O0)
             FPM.addPass(SwiftARCOptPass());
         });
+#endif
     PB.registerOptimizerLastEPCallback([&](ModulePassManager &MPM,
                                           OptimizationLevel Level) {
+#ifndef TINYSWIFT
       if (Level != OptimizationLevel::O0)
         MPM.addPass(createModuleToFunctionPassAdaptor(SwiftARCContractPass()));
+#endif
       if (Level == OptimizationLevel::O0)
         MPM.addPass(AlwaysInlinerPass());
       if (Opts.EmitAsyncFramePushPopMetadata)
