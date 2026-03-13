@@ -29,7 +29,13 @@ namespace irgen {
 using SwiftAggLowering = clang::CodeGen::swiftcall::SwiftAggLowering;
 
 class NativeConventionSchema {
+#ifdef TINYSWIFT
+  // In TinySwift mode, Lowering is heap-allocated and may be null
+  // when ClangCodeGen is unavailable.
+  SwiftAggLowering *Lowering;
+#else
   SwiftAggLowering Lowering;
+#endif
   bool RequiresIndirect;
 
 public:
@@ -37,15 +43,31 @@ public:
 
   NativeConventionSchema(IRGenModule &IGM, const TypeInfo *TI, bool isResult);
 
+#ifdef TINYSWIFT
+  ~NativeConventionSchema() { delete Lowering; }
+#endif
+
   NativeConventionSchema() = delete;
   NativeConventionSchema(const NativeConventionSchema &) = delete;
   NativeConventionSchema &operator=(const NativeConventionSchema&) = delete;
 
   bool requiresIndirect() const { return RequiresIndirect; }
   bool shouldReturnTypedErrorIndirectly() const {
+#ifdef TINYSWIFT
+    if (!Lowering) return true;
+    return requiresIndirect() || Lowering->shouldReturnTypedErrorIndirectly();
+#else
     return requiresIndirect() || Lowering.shouldReturnTypedErrorIndirectly();
+#endif
   }
-  bool empty() const { return Lowering.empty(); }
+  bool empty() const {
+#ifdef TINYSWIFT
+    if (!Lowering) return true;
+    return Lowering->empty();
+#else
+    return Lowering.empty();
+#endif
+  }
 
   llvm::Type *getExpandedType(IRGenModule &IGM) const;
 
@@ -53,7 +75,12 @@ public:
   unsigned size() const;
 
   void enumerateComponents(EnumerationCallback callback) const {
+#ifdef TINYSWIFT
+    if (!Lowering) return;
+    Lowering->enumerateComponents(callback);
+#else
     Lowering.enumerateComponents(callback);
+#endif
   }
 
   /// Map from a non-native explosion to an explosion that follows the native

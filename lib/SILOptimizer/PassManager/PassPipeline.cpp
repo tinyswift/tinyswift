@@ -971,7 +971,11 @@ SILPassPipelinePlan::getIRGenPreparePassPipeline(const SILOptions &Options) {
   P.addAllocStackHoisting();
   // Change large loadable types to be passed indirectly across function
   // boundaries as required by the ABI.
-  P.addLoadableByAddress();
+  // Skip in TinySwift mode: requires Clang CodeGenModule for ABI lowering,
+  // which is unavailable. TinySwift types are value-only and don't need
+  // ABI-mandated indirect passing.
+  if (!Options.TinySwift)
+    P.addLoadableByAddress();
 
   if (Options.EnablePackMetadataStackPromotion) {
     // Insert marker instructions indicating where on-stack pack metadata

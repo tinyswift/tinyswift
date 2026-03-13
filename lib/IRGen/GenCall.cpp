@@ -823,9 +823,20 @@ void SignatureExpansion::expandCoroutineResult(bool forContinuation) {
   // When counting components, ignore the continuation pointer.
   unsigned numDirectComponents = components.size() - 1;
   SmallVector<llvm::Type*, 8> overflowTypes;
+#ifdef TINYSWIFT
+  auto shouldPassIndirectlyFn = [&]() -> bool {
+    if (!IGM.ClangCodeGen)
+      return components.size() > 2; // continuation pointer + one overflow pointer
+    return clang::CodeGen::swiftcall::
+        shouldPassIndirectly(IGM.ClangCodeGen->CGM(), components,
+                             /*asReturnValue*/ true);
+  };
+  while (shouldPassIndirectlyFn()) {
+#else
   while (clang::CodeGen::swiftcall::
                 shouldPassIndirectly(IGM.ClangCodeGen->CGM(), components,
                                      /*asReturnValue*/ true)) {
+#endif
     // If we added a pointer to the end of components, remove it.
     if (!overflowTypes.empty()) components.pop_back();
 
@@ -892,6 +903,29 @@ void SignatureExpansion::addCoroutineContextParameter() {
 NativeConventionSchema::NativeConventionSchema(IRGenModule &IGM,
                                                const TypeInfo *ti,
                                                bool IsResult)
+#ifdef TINYSWIFT
+    : Lowering(nullptr), RequiresIndirect(true) {
+  if (!IGM.ClangCodeGen) {
+    // In TinySwift mode without Clang, pass everything indirectly
+    // except empty (void-like) types. Without SwiftAggLowering we
+    // cannot compute register-level ABI layout.
+    if (auto *loadable = dyn_cast<LoadableTypeInfo>(ti)) {
+      if (loadable->isKnownEmpty(ResilienceExpansion::Maximal))
+        RequiresIndirect = false;
+    }
+    return;
+  }
+  Lowering = new SwiftAggLowering(IGM.ClangCodeGen->CGM());
+  if (auto *loadable = dyn_cast<LoadableTypeInfo>(ti)) {
+    loadable->addToAggLowering(IGM, *Lowering, Size(0));
+    Lowering->finish();
+    RequiresIndirect = Lowering->shouldPassIndirectly(IsResult);
+  } else {
+    Lowering->finish();
+    RequiresIndirect = true;
+  }
+}
+#else
     : Lowering(IGM.ClangCodeGen->CGM()) {
   if (auto *loadable = dyn_cast<LoadableTypeInfo>(ti)) {
     // Lower the type according to the Swift ABI.
@@ -904,6 +938,7 @@ NativeConventionSchema::NativeConventionSchema(IRGenModule &IGM,
     RequiresIndirect = true;
   }
 }
+#endif
 
 llvm::Type *NativeConventionSchema::getExpandedType(IRGenModule &IGM) const {
   if (empty())

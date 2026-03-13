@@ -1574,6 +1574,9 @@ void IRGenModule::constructInitialFnAttributes(
     llvm::AttrBuilder &Attrs, OptimizationMode FuncOptMode,
     StackProtectorMode stackProtector) {
   // Add the default attributes for the Clang configuration.
+#ifdef TINYSWIFT
+  if (ClangCodeGen)
+#endif
   clang::CodeGen::addDefaultFunctionDefinitionAttributes(getClangCGM(), Attrs);
 
   // Add/remove MinSize based on the appropriate setting.

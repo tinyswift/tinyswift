@@ -5084,8 +5084,15 @@ static llvm::BasicBlock *emitBBMapForSwitchEnum(
   }
 
   llvm::BasicBlock *defaultDest = nullptr;
-  if (inst.hasDefault())
-    defaultDest = IGF.getLoweredBB(inst.getDefaultBB()).bb;
+  if (inst.hasDefault()) {
+    auto *defaultBB = inst.getDefaultBB();
+    // In OSSA mode, the default BB may have arguments (the forwarded enum
+    // value). Create a waypoint so we can bind the PHI nodes.
+    if (!defaultBB->args_empty())
+      defaultDest = llvm::BasicBlock::Create(IGF.IGM.getLLVMContext());
+    else
+      defaultDest = IGF.getLoweredBB(defaultBB).bb;
+  }
   return defaultDest;
 }
 
@@ -5108,17 +5115,36 @@ void IRGenSILFunction::visitSwitchEnumInst(SwitchEnumInst *inst) {
     if (!casePair.second->args_empty()) {
       auto waypointBB = dests[i].second;
       auto &destLBB = getLoweredBB(casePair.second);
-      
+
       Builder.emitBlock(waypointBB);
-      
+
       Explosion inValue = getLoweredExplosion(inst->getOperand(), &Builder);
       Explosion projected;
       emitProjectLoadableEnum(*this, inst->getOperand()->getType(),
                                inValue, casePair.first, projected);
-      
+
       unsigned phiIndex = 0;
       addIncomingExplosionToPHINodes(*this, destLBB, phiIndex, projected);
-      
+
+      Builder.CreateBr(destLBB.bb);
+    }
+  }
+
+  // In OSSA mode, the default BB may receive the enum value as an argument.
+  // Bind it via the waypoint.
+  if (inst->hasDefault()) {
+    auto *defaultBB = inst->getDefaultBB();
+    if (!defaultBB->args_empty()) {
+      Builder.emitBlock(defaultDest);
+
+      auto &destLBB = getLoweredBB(defaultBB);
+
+      // The default case forwards the entire enum value (not projected).
+      Explosion inValue = getLoweredExplosion(inst->getOperand(), &Builder);
+
+      unsigned phiIndex = 0;
+      addIncomingExplosionToPHINodes(*this, destLBB, phiIndex, inValue);
+
       Builder.CreateBr(destLBB.bb);
     }
   }
