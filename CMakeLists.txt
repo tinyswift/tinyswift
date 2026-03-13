@@ -226,6 +226,14 @@ if(TINYSWIFT_BUILD)
   set(SWIFT_BUILD_SWIFT_SYNTAX OFF CACHE BOOL "" FORCE)
   set(SWIFT_ENABLE_DISPATCH OFF CACHE BOOL "" FORCE)
   set(SWIFT_BUILD_REMOTE_MIRROR OFF CACHE BOOL "" FORCE)
+  # Skip full Swift stdlib/runtime builds — TinySwift has its own builtins
+  set(SWIFT_BUILD_DYNAMIC_STDLIB OFF CACHE BOOL "" FORCE)
+  set(SWIFT_BUILD_STATIC_STDLIB OFF CACHE BOOL "" FORCE)
+  set(SWIFT_BUILD_DYNAMIC_SDK_OVERLAY OFF CACHE BOOL "" FORCE)
+  set(SWIFT_BUILD_STATIC_SDK_OVERLAY OFF CACHE BOOL "" FORCE)
+  # TinySwift stdlib resource path (populated by stdlib/public/TinySwift)
+  set(TINYSWIFT_STDLIB_DIR "${CMAKE_BINARY_DIR}/stdlib/public/TinySwift"
+      CACHE PATH "Path to TinySwift builtins module and runtime objects")
 endif()
 # ── End TinySwift options ────────────────────────────────────────────────────
 

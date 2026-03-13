@@ -237,8 +237,16 @@ swift_supports_implicit_module("backtracing" SWIFT_COMPILER_SUPPORTS_BACKTRACING
 # FIXME: Include the toolchain directory before the public directory. Otherwise
 # the clang resource directory symlink stops installing correctly.
 add_subdirectory(toolchain)
-add_subdirectory(public)
-if(SWIFT_STDLIB_BUILD_PRIVATE)
-  add_subdirectory(private)
+
+# TinySwift: build only the TinySwift builtins module and minimal runtime,
+# skipping the full Swift standard library and runtime.
+if(TINYSWIFT_BUILD)
+  add_subdirectory(public/TinySwift)
+else()
+  add_subdirectory(public)
+  if(SWIFT_STDLIB_BUILD_PRIVATE)
+    add_subdirectory(private)
+  endif()
 endif()
+
 add_subdirectory(tools)
