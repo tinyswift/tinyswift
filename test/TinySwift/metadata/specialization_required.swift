@@ -1,5 +1,5 @@
 // RUN: %target-swift-frontend -emit-sil -enable-experimental-feature TinySwift \
-// RUN:   -disable-objc-interop -parse-stdlib %s | %FileCheck %s
+// RUN:   -disable-objc-interop -parse-stdlib -parse-as-library %s | %FileCheck %s
 // REQUIRES: swift_feature_TinySwift
 
 // Verify that generic functions are specialized (monomorphized) and the
@@ -12,6 +12,6 @@ func id<T>(_ x: T) -> T {
   return x
 }
 
-func test() -> Builtin.Int64 {
-  return id(Builtin.zeroInitializer() as Builtin.Int64)
+func helper(_ x: Builtin.Int64) -> Builtin.Int64 {
+  return id(x)
 }

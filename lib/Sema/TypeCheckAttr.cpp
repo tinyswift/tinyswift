@@ -4998,6 +4998,21 @@ Type TypeChecker::checkReferenceOwnershipAttr(VarDecl *var, Type type,
     }
   }
 
+  // TinySwift prohibits all reference ownership modifiers (weak, unowned,
+  // unowned(unsafe)) since classes are not supported.
+  if (ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    if (ownershipKind == ReferenceOwnership::Weak) {
+      Diags.diagnose(attr->getLocation(),
+                     diag::weak_not_supported_in_tinyswift);
+      attr->setInvalid();
+    } else if (ownershipKind == ReferenceOwnership::Unowned ||
+               ownershipKind == ReferenceOwnership::Unmanaged) {
+      Diags.diagnose(attr->getLocation(),
+                     diag::unowned_not_supported_in_tinyswift);
+      attr->setInvalid();
+    }
+  }
+
   // unowned(unsafe) is unsafe (duh).
   if (ownershipKind == ReferenceOwnership::Unmanaged &&
       ctx.LangOpts.hasFeature(Feature::WarnUnsafe)) {

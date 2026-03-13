@@ -6,6 +6,9 @@ set_swift_llvm_is_available(swiftSILOptimizer)
 
 if(NOT TINYSWIFT_BUILD)
   add_subdirectory(ARC)
+else()
+  target_sources(swiftSILOptimizer PRIVATE
+    ARC/TinySwiftARCStubs.cpp)
 endif()
 add_subdirectory(Analysis)
 add_subdirectory(Differentiation)

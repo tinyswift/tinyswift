@@ -1,5 +1,5 @@
 // RUN: %target-swift-frontend -emit-ir -enable-experimental-feature TinySwift \
-// RUN:   -disable-objc-interop -parse-stdlib %s | %FileCheck %s
+// RUN:   -disable-objc-interop -parse-stdlib -parse-as-library %s | %FileCheck %s
 // REQUIRES: swift_feature_TinySwift
 
 // Verify that the emitted IR is minimal: no metadata globals, no runtime

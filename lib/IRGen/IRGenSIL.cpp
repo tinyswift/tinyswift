@@ -1350,7 +1350,7 @@ public:
     if (IGM.getSILModule().getOptions().TinySwift) {
       Explosion fullTuple = getLoweredExplosion(i->getOperand());
       SILType baseType = i->getOperand()->getType();
-      auto *tupleTy = baseType.castTo<TupleType>();
+      auto tupleTy = baseType.castTo<TupleType>();
       for (unsigned idx = 0, n = tupleTy->getNumElements(); idx < n; ++idx) {
         Explosion output;
         projectTupleElementFromExplosion(*this, baseType, fullTuple, idx,

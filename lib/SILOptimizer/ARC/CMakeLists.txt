@@ -11,4 +11,7 @@ target_sources(swiftSILOptimizer PRIVATE
   RCStateTransition.cpp
   RCStateTransitionVisitors.cpp
   RefCountState.cpp)
+else()
+target_sources(swiftSILOptimizer PRIVATE
+  TinySwiftARCStubs.cpp)
 endif()

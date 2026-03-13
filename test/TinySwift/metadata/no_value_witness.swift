@@ -1,5 +1,5 @@
 // RUN: %target-swift-frontend -emit-ir -enable-experimental-feature TinySwift \
-// RUN:   -disable-objc-interop -parse-stdlib %s | %FileCheck %s
+// RUN:   -disable-objc-interop -parse-stdlib -parse-as-library %s | %FileCheck %s
 // REQUIRES: swift_feature_TinySwift
 
 // Verify that no value witness tables appear in the emitted IR.

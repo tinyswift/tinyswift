@@ -2333,4 +2333,61 @@ void SILGenFunction::emitForeignToNativeThunk(SILDeclRef thunk) {
   emitRethrowEpilog(fd);
 }
 
+#else // TINYSWIFT
+
+// Stub implementations for TinySwift — bridging is not supported.
+// These are referenced from other SILGen files but never called at runtime
+// because Sema rejects ObjC and bridging constructs.
+
+#include "SILGenFunction.h"
+#include "swift/Basic/Assertions.h"
+
+using namespace swift;
+using namespace Lowering;
+
+ManagedValue SILGenFunction::emitBlockToFunc(
+    SILLocation, ManagedValue, CanAnyFunctionType, CanAnyFunctionType,
+    CanSILFunctionType) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+ManagedValue SILGenFunction::emitFuncToBlock(
+    SILLocation, ManagedValue, CanAnyFunctionType, CanAnyFunctionType,
+    CanSILFunctionType) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+SILValue SILGenFunction::emitForeignErrorCheck(
+    SILLocation, SmallVectorImpl<ManagedValue> &, ManagedValue, bool,
+    const ForeignErrorConvention &, std::optional<ForeignAsyncConvention>) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+ManagedValue SILGenFunction::emitBridgedToNativeError(SILLocation,
+                                                       ManagedValue) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+ManagedValue SILGenFunction::emitBridgedToNativeValue(
+    SILLocation, ManagedValue, CanType, CanType, SILType, SGFContext, bool) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+void SILGenFunction::emitForeignToNativeThunk(SILDeclRef) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+ManagedValue SILGenFunction::emitNativeToBridgedValue(
+    SILLocation, ManagedValue, CanType, CanType, SILType, SGFContext) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+void SILGenFunction::emitNativeToForeignThunk(SILDeclRef) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
+SILFunction *SILGenFunction::emitNativeAsyncToForeignThunk(SILDeclRef) {
+  llvm_unreachable("bridging not available in TinySwift");
+}
+
 #endif // !TINYSWIFT

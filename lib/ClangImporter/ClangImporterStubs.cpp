@@ -18,6 +18,7 @@
 #include "swift/ClangImporter/ClangModule.h"
 #include "swift/IDE/SourceEntityWalker.h"
 #include "swift/Subsystems.h"
+#include "clang/Basic/CodeGenOptions.h"
 #include "llvm/Support/ErrorHandling.h"
 
 // Include the internal header for EffectiveClangContext
@@ -229,7 +230,10 @@ clang::TargetInfo &ClangImporter::getTargetInfo() const {
 }
 
 clang::CodeGenOptions &ClangImporter::getCodeGenOpts() const {
-  llvm_unreachable("ClangImporter not available in TinySwift");
+  // IRGen needs CodeGenOptions for target machine creation (UseInitArray,
+  // EmulatedTLS). Return a static default-initialized object.
+  static clang::CodeGenOptions defaultOpts;
+  return defaultOpts;
 }
 
 clang::TargetInfo &ClangImporter::getModuleAvailabilityTarget() const {

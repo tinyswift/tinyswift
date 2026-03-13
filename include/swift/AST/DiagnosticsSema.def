@@ -2137,6 +2137,12 @@ ERROR(macros_not_supported_in_tinyswift, none,
       "macros are not supported in TinySwift", ())
 ERROR(open_access_not_supported_in_tinyswift, none,
       "'open' access level is not supported in TinySwift; use 'public'", ())
+ERROR(weak_not_supported_in_tinyswift, none,
+      "weak references are not supported in TinySwift", ())
+ERROR(unowned_not_supported_in_tinyswift, none,
+      "unowned references are not supported in TinySwift", ())
+ERROR(import_not_supported_in_tinyswift, none,
+      "module '%0' cannot be imported in TinySwift", (StringRef))
 
 ERROR(access_control_in_protocol,none,
       "%0 modifier cannot be used in protocols", (DeclAttribute))

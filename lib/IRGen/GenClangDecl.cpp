@@ -335,6 +335,9 @@ IRGenModule::getAddrOfClangGlobalDecl(clang::GlobalDecl global,
 }
 
 void IRGenModule::finalizeClangCodeGen() {
+  // TinySwift mode: no ClangCodeGen to finalize.
+  if (!ClangCodeGen) return;
+
   // FIXME: We try to avoid looking for PragmaCommentDecls unless we need to,
   // since clang::DeclContext::decls_begin() can trigger expensive
   // de-serialization.

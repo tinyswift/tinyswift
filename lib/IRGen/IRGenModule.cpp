@@ -160,12 +160,14 @@ static clang::CodeGenerator *createClangCodeGenerator(ASTContext &Context,
   return ClangCodeGen;
 }
 #else
+// In TinySwift mode, no ClangCodeGenerator is needed. The LLVM Module is
+// created directly and owned by IRGenModule::OwnedModule.
 static clang::CodeGenerator *createClangCodeGenerator(ASTContext &Context,
                                                       llvm::LLVMContext &LLVMContext,
                                                       const IRGenOptions &Opts,
                                                       StringRef ModuleName,
                                                       StringRef PD) {
-  llvm_unreachable("createClangCodeGenerator not available in TINYSWIFT");
+  return nullptr;
 }
 #endif // !TINYSWIFT
 
@@ -229,11 +231,22 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
       // as long as the IGM is registered with the IRGenerator.
       ClangCodeGen(createClangCodeGenerator(Context, *LLVMContext, irgen.Opts,
                                             ModuleName, PrivateDiscriminator)),
+#ifdef TINYSWIFT
+      OwnedModule(ClangCodeGen ? nullptr
+                               : std::make_unique<llvm::Module>(ModuleName.str(), *this->LLVMContext)),
+      Module(ClangCodeGen ? *ClangCodeGen->GetModule() : *OwnedModule),
+#else
       Module(*ClangCodeGen->GetModule()),
+#endif
+      TargetMachine(std::move(target)),
+#ifdef TINYSWIFT
+      DataLayout(ClangCodeGen ? irgen.getClangDataLayoutString()
+                              : this->TargetMachine->createDataLayout().getStringRepresentation()),
+#else
       DataLayout(irgen.getClangDataLayoutString()),
+#endif
       Triple(irgen.getEffectiveClangTriple()),
       VariantTriple(irgen.getEffectiveClangVariantTriple()),
-      TargetMachine(std::move(target)),
       silConv(irgen.SIL), OutputFilename(OutputFilename),
       MainInputFilenameForDebugInfo(MainInputFilenameForDebugInfo),
       TargetInfo(SwiftTargetInfo::get(*this)), DebugInfo(nullptr),
@@ -241,6 +254,15 @@ IRGenModule::IRGenModule(IRGenerator &irgen,
       UseDarwinPreStableABIBit(Context.LangOpts.UseDarwinPreStableABIBit),
       Types(*new TypeConverter(*this)) {
   irgen.addGenModule(SF, this);
+
+#ifdef TINYSWIFT
+  // In TinySwift mode without ClangCodeGen, set the Module's data layout and
+  // target triple from the TargetMachine.
+  if (!ClangCodeGen && TargetMachine) {
+    Module.setDataLayout(TargetMachine->createDataLayout());
+    Module.setTargetTriple(TargetMachine->getTargetTriple().str());
+  }
+#endif
 
   auto &opts = irgen.Opts;
 
@@ -1409,14 +1431,31 @@ Lowering::TypeConverter &IRGenModule::getSILTypes() const {
 }
 
 clang::CodeGen::CodeGenModule &IRGenModule::getClangCGM() const {
+#ifdef TINYSWIFT
+  if (!ClangCodeGen)
+    llvm_unreachable("getClangCGM not available in TinySwift mode");
+#endif
   return ClangCodeGen->CGM();
 }
 
 llvm::Module *IRGenModule::getModule() const {
+#ifdef TINYSWIFT
+  if (!ClangCodeGen)
+    return &Module;
+#endif
   return ClangCodeGen->GetModule();
 }
 
 GeneratedModule IRGenModule::intoGeneratedModule() && {
+#ifdef TINYSWIFT
+  if (!ClangCodeGen) {
+    return GeneratedModule{
+      std::move(LLVMContext),
+      std::move(OwnedModule),
+      std::move(TargetMachine)
+    };
+  }
+#endif
   return GeneratedModule{
     std::move(LLVMContext),
     std::unique_ptr<llvm::Module>{ClangCodeGen->ReleaseModule()},
@@ -2102,7 +2141,7 @@ bool IRGenModule::finalize() {
   finalizeClangCodeGen();
 
   // If that failed, report failure up and skip the final clean-up.
-  if (!ClangCodeGen->GetModule())
+  if (ClangCodeGen && !ClangCodeGen->GetModule())
     return false;
 
   emitSwiftAsyncExtendedFrameInfoWeakRef();

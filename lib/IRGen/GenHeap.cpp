@@ -1270,8 +1270,12 @@ void IRGenFunction::emitNativeStrongRelease(llvm::Value *value,
 }
 
 void IRGenFunction::emitNativeSetDeallocating(llvm::Value *value) {
+#ifdef TINYSWIFT_NO_ARC
+  llvm_unreachable("ARC setDeallocating not available in TinySwift");
+#else
   if (doesNotRequireRefCounting(value)) return;
   emitUnaryRefCountCall(*this, IGM.getNativeSetDeallocatingFn(), value);
+#endif
 }
 
 llvm::Constant *IRGenModule::getFixLifetimeFn() {

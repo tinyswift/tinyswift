@@ -356,6 +356,24 @@ void ImportResolver::bindImport(UnboundImport &&I) {
     return;
   }
 
+  // TinySwift: restrict imports to allowed modules.
+  // Allow: C/C++ (Clang) modules, TinySwift stdlib, Swift stdlib, Builtin.
+  // Reject: Foundation, UIKit, and other Swift/ObjC frameworks.
+  if (ctx.LangOpts.hasFeature(Feature::TinySwift) && ID) {
+    auto moduleName = M->getName().str();
+    bool isClangModule = M->isNonSwiftModule();
+    bool isAllowedSwiftModule = (moduleName == "TinySwift" ||
+                                 moduleName == "Swift" ||
+                                 moduleName == "Builtin");
+    if (!isClangModule && !isAllowedSwiftModule) {
+      ctx.Diags.diagnose(ID.get()->getStartLoc(),
+                         diag::import_not_supported_in_tinyswift,
+                         moduleName);
+      ID.get()->setModule(nullptr);
+      return;
+    }
+  }
+
   // Load more dependencies for testable imports.
   if (I.import.options.contains(ImportFlags::Testable)) {
     SourceLoc diagLoc;

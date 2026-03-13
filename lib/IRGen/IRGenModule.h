@@ -659,11 +659,14 @@ public:
   IRGenerator &IRGen;
   ASTContext &Context;
   std::unique_ptr<clang::CodeGenerator> ClangCodeGen;
+#ifdef TINYSWIFT
+  std::unique_ptr<llvm::Module> OwnedModule;
+#endif
   llvm::Module &Module;
+  std::unique_ptr<llvm::TargetMachine> TargetMachine;
   const llvm::DataLayout DataLayout;
   const llvm::Triple Triple;
   const llvm::Triple VariantTriple;
-  std::unique_ptr<llvm::TargetMachine> TargetMachine;
   ModuleDecl *getSwiftModule() const;
   AvailabilityRange getAvailabilityRange() const;
   Lowering::TypeConverter &getSILTypes() const;
@@ -1143,7 +1146,7 @@ private:
   TypeConverter &Types;
   friend TypeConverter;
 
-  const clang::ASTContext *ClangASTContext;
+  const clang::ASTContext *ClangASTContext = nullptr;
 
   llvm::DenseMap<Decl*, MetadataLayout*> MetadataLayouts;
   void destroyMetadataLayoutMap();

@@ -139,18 +139,20 @@ swift::getIRTargetOptions(const IRGenOptions &Opts, ASTContext &Ctx) {
 
   auto *Clang = static_cast<ClangImporter *>(Ctx.getClangModuleLoader());
 
-  // Set UseInitArray appropriately.
-  TargetOpts.UseInitArray = Clang->getCodeGenOpts().UseInitArray;
+  if (Clang) {
+    // Set UseInitArray appropriately.
+    TargetOpts.UseInitArray = Clang->getCodeGenOpts().UseInitArray;
 
-  // Set emulated TLS in inlined C/C++ functions based on what clang is doing,
-  // ie either setting the default based on the OS or -Xcc -f{no-,}emulated-tls
-  // command-line flags.
-  TargetOpts.EmulatedTLS = Clang->getCodeGenOpts().EmulatedTLS;
+    // Set emulated TLS in inlined C/C++ functions based on what clang is doing,
+    // ie either setting the default based on the OS or -Xcc -f{no-,}emulated-tls
+    // command-line flags.
+    TargetOpts.EmulatedTLS = Clang->getCodeGenOpts().EmulatedTLS;
 
-  // WebAssembly doesn't support atomics yet, see
-  // https://github.com/apple/swift/issues/54533 for more details.
-  if (Clang->getTargetInfo().getTriple().isOSBinFormatWasm())
-    TargetOpts.ThreadModel = llvm::ThreadModel::Single;
+    // WebAssembly doesn't support atomics yet, see
+    // https://github.com/apple/swift/issues/54533 for more details.
+    if (Clang->getTargetInfo().getTriple().isOSBinFormatWasm())
+      TargetOpts.ThreadModel = llvm::ThreadModel::Single;
+  }
 
   if (Opts.EnableGlobalISel) {
     TargetOpts.EnableGlobalISel = true;
@@ -169,8 +171,15 @@ swift::getIRTargetOptions(const IRGenOptions &Opts, ASTContext &Ctx) {
     break;
   }
 
-  clang::TargetOptions &ClangOpts = Clang->getTargetInfo().getTargetOpts();
-  return std::make_tuple(TargetOpts, ClangOpts.CPU, ClangOpts.Features, ClangOpts.Triple);
+  if (Clang) {
+    clang::TargetOptions &ClangOpts = Clang->getTargetInfo().getTargetOpts();
+    return std::make_tuple(TargetOpts, ClangOpts.CPU, ClangOpts.Features, ClangOpts.Triple);
+  }
+
+  // TinySwift / -parse-stdlib without ClangImporter: use the Swift-level triple.
+  return std::make_tuple(TargetOpts, std::string(),
+                         std::vector<std::string>(),
+                         Ctx.LangOpts.Target.str());
 }
 
 void setModuleFlags(IRGenModule &IGM) {
@@ -1755,7 +1764,11 @@ bool swift::performLLVM(const IRGenOptions &Opts, ASTContext &Ctx,
 
   auto *Clang = static_cast<ClangImporter *>(Ctx.getClangModuleLoader());
   // Use clang's datalayout.
-  Module->setDataLayout(Clang->getTargetInfo().getDataLayoutString());
+  if (Clang) {
+    Module->setDataLayout(Clang->getTargetInfo().getDataLayoutString());
+  } else {
+    Module->setDataLayout(TargetMachine->createDataLayout());
+  }
 
   embedBitcode(Module, Opts);
   if (::performLLVM(Opts, Ctx.Diags, nullptr, nullptr, Module,

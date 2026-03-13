@@ -64,6 +64,10 @@ llvm::Value *irgen::emitCheckedCast(IRGenFunction &IGF,
                                     CanType targetType,
                                     CastConsumptionKind consumptionKind,
                                     CheckedCastMode mode) {
+  // TinySwift: dynamic casts are rejected by Sema; this is a safety net.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitCheckedCast in TinySwift mode");
+
   // TODO: attempt to specialize this based on the known types.
 
   DynamicCastFlags flags = getDynamicCastFlags(consumptionKind, mode);
@@ -169,6 +173,10 @@ getDynamicCastArguments(IRGenFunction &IGF,
 /// Emit a checked unconditional downcast of a class value.
 llvm::Value *irgen::emitClassDowncast(IRGenFunction &IGF, llvm::Value *from,
                                       CanType toType, CheckedCastMode mode) {
+  // TinySwift: classes and dynamic casts are rejected by Sema; safety net.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitClassDowncast in TinySwift mode");
+
   // Emit the value we're casting from.
   if (from->getType() != IGF.IGM.Int8PtrTy)
     from = IGF.Builder.CreateBitOrPointerCast(from, IGF.IGM.Int8PtrTy);
@@ -265,6 +273,10 @@ void irgen::emitMetatypeDowncast(IRGenFunction &IGF,
                                  CanMetatypeType toMetatype,
                                  CheckedCastMode mode,
                                  Explosion &ex) {
+  // TinySwift: metatype downcasts are not supported; safety net.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitMetatypeDowncast in TinySwift mode");
+
   // Pick a runtime entry point and target metadata based on what kind of
   // representation we're casting.
   FunctionPointer castFn;
@@ -534,6 +546,10 @@ void irgen::emitScalarExistentialDowncast(
     IRGenFunction &IGF, llvm::Value *value, SILType srcType, SILType destType,
     CheckedCastMode mode, std::optional<MetatypeRepresentation> metatypeKind,
     Explosion &ex) {
+  // TinySwift: existential downcasts are not supported; safety net.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitScalarExistentialDowncast in TinySwift mode");
+
   auto srcInstanceType = srcType.getASTType();
   auto destInstanceType = destType.getASTType();
   while (auto metatypeType = dyn_cast<ExistentialMetatypeType>(
@@ -848,6 +864,10 @@ void irgen::emitScalarCheckedCast(IRGenFunction &IGF,
                                   CanType targetFormalType,
                                   CheckedCastMode mode,
                                   Explosion &out) {
+  // TinySwift: scalar checked casts are not supported; safety net.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("emitScalarCheckedCast in TinySwift mode");
+
   assert(sourceLoweredType.isObject());
   assert(targetLoweredType.isObject());
 
