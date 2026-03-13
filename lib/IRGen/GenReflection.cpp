@@ -1189,6 +1189,10 @@ public:
 };
 
 void IRGenModule::emitBuiltinTypeMetadataRecord(CanType builtinType) {
+  // TinySwift: no reflection metadata.
+  if (getSILModule().getOptions().TinySwift)
+    return;
+
   FixedTypeMetadataBuilder builder(*this, builtinType);
   builder.emit();
 }
@@ -1745,6 +1749,10 @@ llvm::ArrayRef<CanType> IRGenModule::getOrCreateSpecialStlibBuiltinTypes() {
 }
 
 void IRGenModule::emitBuiltinReflectionMetadata() {
+  // TinySwift: no reflection metadata.
+  if (getSILModule().getOptions().TinySwift)
+    return;
+
   if (getSILModule().getOptions().StopOptimizationAfterSerialization) {
     // We're asked to emit an empty IR module
     return;
@@ -1766,6 +1774,10 @@ void IRGenerator::emitBuiltinReflectionMetadata() {
 }
 
 void IRGenModule::emitFieldDescriptor(const NominalTypeDecl *D) {
+  // TinySwift: no reflection metadata.
+  if (getSILModule().getOptions().TinySwift)
+    return;
+
   if (IRGen.Opts.ReflectionMetadata == ReflectionMetadataMode::None)
     return;
 
@@ -1851,6 +1863,10 @@ void IRGenModule::emitFieldDescriptor(const NominalTypeDecl *D) {
 }
 
 void IRGenModule::emitReflectionMetadataVersion() {
+  // TinySwift: no reflection metadata.
+  if (getSILModule().getOptions().TinySwift)
+    return;
+
   if (IRGen.Opts.ReflectionMetadata == ReflectionMetadataMode::None)
     return;
 
@@ -1865,6 +1881,10 @@ void IRGenModule::emitReflectionMetadataVersion() {
 }
 
 void IRGenerator::emitReflectionMetadataVersion() {
+  // TinySwift: no reflection metadata.
+  if (SIL.getOptions().TinySwift)
+    return;
+
   for (auto &m : *this) {
     m.second->emitReflectionMetadataVersion();
   }
