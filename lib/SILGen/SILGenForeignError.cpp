@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef TINYSWIFT
+
 #include "ASTVisitor.h"
 #include "LValue.h"
 #include "RValue.h"
@@ -467,3 +469,5 @@ SILValue SILGenFunction::emitForeignErrorCheck(
   }
   llvm_unreachable("bad foreign error convention kind");
 }
+
+#endif // \!TINYSWIFT

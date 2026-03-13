@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef TINYSWIFT
+
 #include "ArgumentScope.h"
 #include "Callee.h"
 #include "ExecutorBreadcrumb.h"
@@ -2330,3 +2332,5 @@ void SILGenFunction::emitForeignToNativeThunk(SILDeclRef thunk) {
   // Emit the throw destination.
   emitRethrowEpilog(fd);
 }
+
+#endif // !TINYSWIFT

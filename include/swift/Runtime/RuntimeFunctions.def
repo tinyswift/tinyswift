@@ -204,6 +204,7 @@ FUNCTION(CopyPOD, swift_copyPOD, C_CC, AlwaysAvailable,
          EFFECT(NoEffect),
          UNKNOWN_MEMEFFECTS)
 
+#ifndef TINYSWIFT_NO_ARC
 // void *swift_retain(void *ptr);
 FUNCTION(NativeStrongRetain, swift_retain, C_CC, AlwaysAvailable,
          RETURNS(RefCountedPtrTy),
@@ -260,6 +261,7 @@ FUNCTION(NativeNonAtomicStrongReleaseN, swift_nonatomic_release_n, C_CC, AlwaysA
          ATTRS(NoUnwind),
          EFFECT(RefCounting, Deallocating),
          UNKNOWN_MEMEFFECTS)
+#endif // !TINYSWIFT_NO_ARC
 
 // void *swift_unknownObjectRetain_n(void *ptr, int32_t n);
 FUNCTION(UnknownObjectRetainN, swift_unknownObjectRetain_n,
@@ -333,6 +335,7 @@ FUNCTION(NonAtomicBridgeObjectReleaseN, swift_nonatomic_bridgeObjectRelease_n,
          EFFECT(RefCounting, Deallocating),
          UNKNOWN_MEMEFFECTS)
 
+#ifndef TINYSWIFT_NO_ARC
 // void *swift_nonatomic_retain(void *ptr);
 FUNCTION(NativeNonAtomicStrongRetain, swift_nonatomic_retain,
          C_CC, AlwaysAvailable,
@@ -350,6 +353,7 @@ FUNCTION(NativeNonAtomicStrongRelease, swift_nonatomic_release,
          ATTRS(NoUnwind),
          EFFECT(RefCounting, Deallocating),
          UNKNOWN_MEMEFFECTS)
+#endif // !TINYSWIFT_NO_ARC
 
 // void *swift_tryRetain(void *ptr);
 FUNCTION(NativeTryRetain, swift_tryRetain, C_CC, AlwaysAvailable,

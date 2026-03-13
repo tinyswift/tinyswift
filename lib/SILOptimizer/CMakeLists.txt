@@ -4,7 +4,9 @@ target_link_libraries(swiftSILOptimizer PRIVATE
   swiftSIL)
 set_swift_llvm_is_available(swiftSILOptimizer)
 
-add_subdirectory(ARC)
+if(NOT TINYSWIFT_BUILD)
+  add_subdirectory(ARC)
+endif()
 add_subdirectory(Analysis)
 add_subdirectory(Differentiation)
 add_subdirectory(FunctionSignatureTransforms)

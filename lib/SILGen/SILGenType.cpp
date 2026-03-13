@@ -1162,12 +1162,14 @@ public:
     }
 
     // Build a vtable if this is a class.
+#ifndef TINYSWIFT
     if (auto theClass = dyn_cast<ClassDecl>(theType)) {
       if (!theClass->hasClangNode()) {
         SILGenVTable genVTable(SGM, theClass);
         genVTable.emitVTable();
       }
     }
+#endif
 
     // If this is a nominal type that is move only, emit a deinit table for it.
     if (auto *nom = dyn_cast<NominalTypeDecl>(theType)) {

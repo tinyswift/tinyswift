@@ -1,3 +1,4 @@
+if(NOT TINYSWIFT_BUILD)
 target_sources(swiftSILOptimizer PRIVATE
   ARCBBState.cpp
   ARCLoopOpts.cpp
@@ -10,3 +11,4 @@ target_sources(swiftSILOptimizer PRIVATE
   RCStateTransition.cpp
   RCStateTransitionVisitors.cpp
   RefCountState.cpp)
+endif()

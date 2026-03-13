@@ -904,6 +904,10 @@ struct OwnershipModelEliminator : SILFunctionTransform {
     auto *f = getFunction();
     auto &mod = getFunction()->getModule();
 
+    // TinySwift: preserve OSSA form through to IRGen.
+    if (mod.getOptions().TinySwift)
+      return;
+
     // If we are supposed to skip the stdlib module and we are in the stdlib
     // module bail.
     if (skipStdlibModule && mod.isStdlibModule()) {

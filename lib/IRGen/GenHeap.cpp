@@ -987,6 +987,9 @@ static void emitStoreWeakLikeCall(IRGenFunction &IGF,
 /// Emit a call to swift_retain.
 void IRGenFunction::emitNativeStrongRetain(llvm::Value *value,
                                            Atomicity atomicity) {
+#ifdef TINYSWIFT_NO_ARC
+  llvm_unreachable("ARC retain not available in TinySwift");
+#else
   if (doesNotRequireRefCounting(value))
     return;
 
@@ -1002,6 +1005,7 @@ void IRGenFunction::emitNativeStrongRetain(llvm::Value *value,
       value);
   call->setDoesNotThrow();
   call->addParamAttr(0, llvm::Attribute::Returned);
+#endif
 }
 
 /// Emit a store of a live value to the given retaining variable.
@@ -1253,12 +1257,16 @@ llvm::Type *IRGenModule::getReferenceType(ReferenceCounting refcounting) {
 /// Emit a release of a live value.
 void IRGenFunction::emitNativeStrongRelease(llvm::Value *value,
                                             Atomicity atomicity) {
+#ifdef TINYSWIFT_NO_ARC
+  llvm_unreachable("ARC release not available in TinySwift");
+#else
   if (doesNotRequireRefCounting(value))
     return;
   emitUnaryRefCountCall(*this, (atomicity == Atomicity::Atomic)
                                    ? IGM.getNativeStrongReleaseFn()
                                    : IGM.getNativeNonAtomicStrongReleaseFn(),
                         value);
+#endif
 }
 
 void IRGenFunction::emitNativeSetDeallocating(llvm::Value *value) {

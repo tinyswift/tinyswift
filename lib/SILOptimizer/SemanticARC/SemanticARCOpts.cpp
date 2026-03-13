@@ -153,6 +153,21 @@ struct SemanticARCOpts : SILFunctionTransform {
         !f.hasOwnership())
       return;
 
+    // TinySwift: restrict to safe peephole transforms only.
+    // Skip LoadCopyToLoadBorrow and LifetimeJoining (they have ARC
+    // assumptions). Only run redundant copy/borrow/move elimination and
+    // ownership conversion elimination.
+    if (f.getModule().getOptions().TinySwift) {
+      auto *deBlocksAnalysis = getAnalysis<DeadEndBlocksAnalysis>();
+      SemanticARCOptVisitor visitor(f, getPassManager(),
+                                    *deBlocksAnalysis->get(&f),
+                                    mandatoryOptsOnly);
+      bool changed = performPeepholesWithoutFixedPoint(visitor);
+      if (changed)
+        invalidateAnalysis(SILAnalysis::InvalidationKind::Instructions);
+      return;
+    }
+
     // Make sure we are running with ownership verification enabled.
     assert(f.getModule().getOptions().VerifySILOwnership &&
            "Can not perform semantic arc optimization unless ownership "

@@ -80,14 +80,16 @@ static void addModulePrinterPipeline(SILPassPipelinePlan &plan,
 static void addMandatoryDebugSerialization(SILPassPipelinePlan &P) {
   P.startPipeline("Mandatory Debug Serialization");
   P.addAddressLowering();
-  P.addOwnershipModelEliminator();
+  if (!P.getOptions().TinySwift)
+    P.addOwnershipModelEliminator();
   P.addMandatoryInlining();
 }
 
 static void addOwnershipModelEliminatorPipeline(SILPassPipelinePlan &P) {
   P.startPipeline("Ownership Model Eliminator");
   P.addAddressLowering();
-  P.addOwnershipModelEliminator();
+  if (!P.getOptions().TinySwift)
+    P.addOwnershipModelEliminator();
 }
 
 /// Passes for performing definite initialization. Must be run together in this
@@ -279,6 +281,12 @@ SILPassPipelinePlan::getSILGenPassPipeline(const SILOptions &Options) {
   P.startPipeline("SILGen Passes");
 
   P.addSILGenCleanup();
+
+  // TinySwift: verify no ARC/class instructions after SILGen cleanup.
+  if (P.getOptions().TinySwift) {
+    P.addTinySwiftVerifier();
+  }
+
   if (P.getOptions().EnableLifetimeDependenceDiagnostics) {
     P.addLifetimeDependenceInsertion();
     P.addLifetimeDependenceScopeFixup();
@@ -507,19 +515,23 @@ void addFunctionPasses(SILPassPipelinePlan &P,
     // class_method/witness_method instructions may use concrete types now.
     P.addDevirtualizer();
   }
-  P.addARCSequenceOpts();
+  if (!P.getOptions().TinySwift)
+    P.addARCSequenceOpts();
 
   P.addDeinitDevirtualizer();
 
   // We earlier eliminated ownership if we are not compiling the stdlib. Now
   // handle the stdlib functions, re-simplifying, eliminating ARC as we do.
-  if (P.getOptions().CopyPropagation != CopyPropagationOption::Off) {
+  if (!P.getOptions().TinySwift &&
+      P.getOptions().CopyPropagation != CopyPropagationOption::Off) {
     P.addCopyPropagation();
   }
-  P.addSemanticARCOpts();
-  P.addLoadCopyToBorrowOptimization();
+  if (!P.getOptions().TinySwift) {
+    P.addSemanticARCOpts();
+    P.addLoadCopyToBorrowOptimization();
+  }
 
-  if (!P.getOptions().EnableOSSAModules) {
+  if (!P.getOptions().EnableOSSAModules && !P.getOptions().TinySwift) {
     if (P.getOptions().StopOptimizationBeforeLoweringOwnership)
       return;
 
@@ -542,7 +554,7 @@ void addFunctionPasses(SILPassPipelinePlan &P,
   }
 
   // Clean up Semantic ARC before we perform additional post-inliner opts.
-  if (P.getOptions().EnableOSSAModules) {
+  if (P.getOptions().EnableOSSAModules && !P.getOptions().TinySwift) {
     if (P.getOptions().CopyPropagation != CopyPropagationOption::Off) {
       P.addCopyPropagation();
     }
@@ -588,8 +600,10 @@ void addFunctionPasses(SILPassPipelinePlan &P,
 
   // Perform retain/release code motion and run the first ARC optimizer.
   P.addEarlyCodeMotion();
-  P.addReleaseHoisting();
-  P.addARCSequenceOpts();
+  if (!P.getOptions().TinySwift) {
+    P.addReleaseHoisting();
+    P.addARCSequenceOpts();
+  }
   P.addTempRValueOpt();
 
   P.addSimplifyCFG();
@@ -599,17 +613,19 @@ void addFunctionPasses(SILPassPipelinePlan &P,
   } else
     P.addEarlyCodeMotion();
 
-  P.addRetainSinking();
-  // Retain sinking does not sink all retains in one round.
-  // Let it run one more time time, because it can be beneficial.
-  // FIXME: Improve the RetainSinking pass to sink more/all
-  // retains in one go.
-  P.addRetainSinking();
-  P.addReleaseHoisting();
-  P.addARCSequenceOpts();
+  if (!P.getOptions().TinySwift) {
+    P.addRetainSinking();
+    // Retain sinking does not sink all retains in one round.
+    // Let it run one more time time, because it can be beneficial.
+    // FIXME: Improve the RetainSinking pass to sink more/all
+    // retains in one go.
+    P.addRetainSinking();
+    P.addReleaseHoisting();
+    P.addARCSequenceOpts();
+  }
 
   // Run a final round of ARC opts when ownership is enabled.
-  if (P.getOptions().EnableOSSAModules) {
+  if (P.getOptions().EnableOSSAModules && !P.getOptions().TinySwift) {
     if (P.getOptions().CopyPropagation != CopyPropagationOption::Off) {
       P.addCopyPropagation();
     }
@@ -871,7 +887,8 @@ static void addLateLoopOptPassPipeline(SILPassPipelinePlan &P) {
 
   // Try to hoist all releases, including epilogue releases. This should be
   // after FSO.
-  P.addLateReleaseHoisting();
+  if (!P.getOptions().TinySwift)
+    P.addLateReleaseHoisting();
 }
 
 // Run passes that
@@ -923,7 +940,8 @@ SILPassPipelinePlan::getLoweringPassPipeline(const SILOptions &Options) {
   // Lower thunks.
   P.addThunkLowering();
   P.addLowerHopToActor(); // FIXME: earlier for more opportunities?
-  P.addOwnershipModelEliminator();
+  if (!P.getOptions().TinySwift)
+    P.addOwnershipModelEliminator();
   P.addAlwaysEmitConformanceMetadataPreservation();
   P.addIRGenPrepare();
 
@@ -994,7 +1012,7 @@ SILPassPipelinePlan::getPerformancePassPipeline(const SILOptions &Options) {
 
   // Run one last copy propagation/semantic arc opts run before serialization/us
   // lowering ownership.
-  if (P.getOptions().EnableOSSAModules) {
+  if (P.getOptions().EnableOSSAModules && !P.getOptions().TinySwift) {
     if (P.getOptions().CopyPropagation != CopyPropagationOption::Off) {
       P.addCopyPropagation();
     }
@@ -1012,7 +1030,8 @@ SILPassPipelinePlan::getPerformancePassPipeline(const SILOptions &Options) {
   P.addSerializeSILPass();
 
   // Strip any transparent functions that still have ownership.
-  P.addOwnershipModelEliminator();
+  if (!P.getOptions().TinySwift)
+    P.addOwnershipModelEliminator();
 
   if (Options.StopOptimizationAfterSerialization)
     return P;
@@ -1065,7 +1084,8 @@ SILPassPipelinePlan::getOnonePassPipeline(const SILOptions &Options) {
 
   // TODO: MandatoryARCOpts should be subsumed by CopyPropagation. There should
   // be no need to run another analysis of copies at -Onone.
-  P.addMandatoryARCOpts();
+  if (!P.getOptions().TinySwift)
+    P.addMandatoryARCOpts();
 
   // Create pre-specializations.
   // This needs to run pre-serialization because it needs to identify native
@@ -1087,7 +1107,8 @@ SILPassPipelinePlan::getOnonePassPipeline(const SILOptions &Options) {
     return P;
 
   // Now strip any transparent functions that still have ownership.
-  P.addOwnershipModelEliminator();
+  if (!P.getOptions().TinySwift)
+    P.addOwnershipModelEliminator();
 
   // Finally perform some small transforms.
   P.startPipeline("Rest of Onone");

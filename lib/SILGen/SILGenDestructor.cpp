@@ -230,8 +230,10 @@ void SILGenFunction::emitDestroyingDestructor(DestructorDecl *dd) {
 void SILGenFunction::emitDeallocatingDestructor(DestructorDecl *dd,
                                                 bool isIsolated) {
   auto *nom = dd->getDeclContext()->getSelfNominalTypeDecl();
+#ifndef TINYSWIFT
   if (isa<ClassDecl>(nom))
     return emitDeallocatingClassDestructor(dd, isIsolated);
+#endif
   assert(!nom->canBeCopyable());
   return emitDeallocatingMoveOnlyDestructor(dd);
 }

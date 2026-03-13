@@ -1137,5 +1137,11 @@ NOTE(lifetime_outside_scope_escape, none,
 ERROR(noncopyable_shared_case_block_unimplemented, none,
       "matching a non-'Copyable' value using a case label that has multiple patterns is not implemented", ())
 
+// TinySwift ownership diagnostics
+ERROR(tinyswift_implicit_copy_of_nontrivial,none,
+      "implicit copy of non-trivial value in TinySwift; use 'consume' or 'borrowing'", ())
+ERROR(tinyswift_escaping_capture,none,
+      "closure captures non-trivial value in TinySwift; captured values must be consumed or borrowed explicitly", ())
+
 #define UNDEFINE_DIAGNOSTIC_MACROS
 #include "DefineDiagnosticMacros.h"

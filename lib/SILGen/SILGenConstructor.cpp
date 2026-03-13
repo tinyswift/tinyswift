@@ -928,6 +928,9 @@ void SILGenFunction::emitEnumConstructor(EnumElementDecl *element) {
 }
 
 void SILGenFunction::emitClassConstructorAllocator(ConstructorDecl *ctor) {
+#ifdef TINYSWIFT
+  llvm_unreachable("class constructor allocator not supported in TinySwift");
+#else
   assert(!ctor->isFactoryInit() && "factories should not be emitted here");
 
   // Emit the prolog. Since we're just going to forward our args directly
@@ -1027,6 +1030,7 @@ void SILGenFunction::emitClassConstructorAllocator(ConstructorDecl *ctor) {
 
   // Return the initialized 'self'.
   B.createReturn(ImplicitReturnLocation(Loc), initedSelfValue);
+#endif // !TINYSWIFT
 }
 
 static void emitDefaultActorInitialization(
@@ -1056,6 +1060,9 @@ static void emitNonDefaultDistributedActorInitialization(
 // MARK: class constructor
 
 void SILGenFunction::emitClassConstructorInitializer(ConstructorDecl *ctor) {
+#ifdef TINYSWIFT
+  llvm_unreachable("class constructor initializer not supported in TinySwift");
+#else
   MagicFunctionName = SILGenModule::getMagicFunctionName(ctor);
 
   assert(ctor->getTypecheckedBody() && "Class constructor without a body?");
@@ -1344,6 +1351,7 @@ void SILGenFunction::emitClassConstructorInitializer(ConstructorDecl *ctor) {
     else
       B.createReturn(returnLoc, selfArg.forward(*this));
   }
+#endif // !TINYSWIFT
 }
 
 static ManagedValue emitSelfForMemberInit(SILGenFunction &SGF, SILLocation loc,

@@ -1234,6 +1234,16 @@ public:
     llvm_unreachable("mark_function_escape is not valid in canonical SIL");
   }
   void visitLoadBorrowInst(LoadBorrowInst *i) {
+    // TinySwift: emit as a plain load (take semantics for value types).
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion lowered;
+      Address source = getLoweredAddress(i->getOperand());
+      SILType objType = i->getType().getObjectType();
+      const auto &typeInfo = cast<LoadableTypeInfo>(getTypeInfo(objType));
+      typeInfo.loadAsTake(*this, source, lowered);
+      setLoweredExplosion(i, lowered);
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitDebugValueInst(DebugValueInst *i);
@@ -1242,6 +1252,12 @@ public:
   void visitRetainValueAddrInst(RetainValueAddrInst *i);
   void visitCopyValueInst(CopyValueInst *i);
   void visitExplicitCopyValueInst(ExplicitCopyValueInst *i) {
+    // TinySwift: forward operand (bitwise copy for value types).
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion e = getLoweredExplosion(i->getOperand());
+      setLoweredExplosion(i, e);
+      return;
+    }
     llvm_unreachable("Valid only when ownership is enabled");
   }
   void visitMoveValueInst(MoveValueInst *i) {
@@ -1249,10 +1265,22 @@ public:
     setLoweredExplosion(i, e);
   }
   void visitDropDeinitInst(DropDeinitInst *i) {
+    // TinySwift: forward operand.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion e = getLoweredExplosion(i->getOperand());
+      setLoweredExplosion(i, e);
+      return;
+    }
     llvm_unreachable("only valid in ownership SIL");
   }
   void visitMarkUnresolvedNonCopyableValueInst(
       MarkUnresolvedNonCopyableValueInst *i) {
+    // TinySwift: forward operand (should be lowered away but belt-and-suspenders).
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion e = getLoweredExplosion(i->getOperand());
+      setLoweredExplosion(i, e);
+      return;
+    }
     llvm_unreachable("Invalid in Lowered SIL");
   }
   void visitMarkUnresolvedReferenceBindingInst(
@@ -1285,6 +1313,9 @@ public:
   }
 
   void visitMergeIsolationRegionInst(MergeIsolationRegionInst *i) {
+    // TinySwift: no-op.
+    if (IGM.getSILModule().getOptions().TinySwift)
+      return;
     llvm_unreachable("Valid only when ownership is enabled");
   }
 
@@ -1315,9 +1346,40 @@ public:
   void visitExistentialMetatypeInst(ExistentialMetatypeInst *i);
   void visitTupleExtractInst(TupleExtractInst *i);
   void visitDestructureTupleInst(DestructureTupleInst *i) {
+    // TinySwift: extract and forward tuple elements.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion fullTuple = getLoweredExplosion(i->getOperand());
+      SILType baseType = i->getOperand()->getType();
+      auto *tupleTy = baseType.castTo<TupleType>();
+      for (unsigned idx = 0, n = tupleTy->getNumElements(); idx < n; ++idx) {
+        Explosion output;
+        projectTupleElementFromExplosion(*this, baseType, fullTuple, idx,
+                                         output);
+        setLoweredExplosion(i->getResult(idx), output);
+      }
+      (void)fullTuple.claimAll();
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitDestructureStructInst(DestructureStructInst *i) {
+    // TinySwift: extract and forward struct fields.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion operand = getLoweredExplosion(i->getOperand());
+      SILType baseType = i->getOperand()->getType();
+      auto *structDecl = baseType.getStructOrBoundGenericStruct();
+      assert(structDecl && "destructure_struct on non-struct type");
+      unsigned resultIdx = 0;
+      for (auto *field : structDecl->getStoredProperties()) {
+        Explosion output;
+        projectPhysicalStructMemberFromExplosion(*this, baseType, operand,
+                                                 field, output);
+        setLoweredExplosion(i->getResult(resultIdx), output);
+        ++resultIdx;
+      }
+      (void)operand.claimAll();
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitTupleElementAddrInst(TupleElementAddrInst *i);
@@ -1364,25 +1426,67 @@ public:
   
   void visitFixLifetimeInst(FixLifetimeInst *i);
   void visitEndLifetimeInst(EndLifetimeInst *i) {
+    // TinySwift: no-op — claim and discard the explosion.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      (void)getLoweredExplosion(i->getOperand()).claimAll();
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitExtendLifetimeInst(ExtendLifetimeInst *i) {
+    // TinySwift: no-op.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      return;
+    }
     llvm_unreachable("should not exist after ownership lowering!?");
   }
   void
   visitUncheckedOwnershipConversionInst(UncheckedOwnershipConversionInst *i) {
+    // TinySwift: forward operand.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion e = getLoweredExplosion(i->getOperand());
+      setLoweredExplosion(i, e);
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitBeginBorrowInst(BeginBorrowInst *i) {
+    // TinySwift: forward operand explosion.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion e = getLoweredExplosion(i->getOperand());
+      setLoweredExplosion(i, e);
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitBorrowedFromInst(BorrowedFromInst *i) {
+    // TinySwift: forward borrowed value.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion e = getLoweredExplosion(i->getBorrowedValue());
+      setLoweredExplosion(i, e);
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitEndBorrowInst(EndBorrowInst *i) {
+    // TinySwift: no-op.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitStoreBorrowInst(StoreBorrowInst *i) {
+    // TinySwift: emit as a plain store.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      Explosion source = getLoweredExplosion(i->getSrc());
+      Address dest = getLoweredAddress(i->getDest());
+      SILType objType = i->getSrc()->getType().getObjectType();
+      const auto &typeInfo = cast<LoadableTypeInfo>(getTypeInfo(objType));
+      typeInfo.initialize(*this, source, dest, false);
+      // store_borrow produces an address result — forward the dest.
+      setLoweredAddress(i, dest);
+      return;
+    }
     llvm_unreachable("unimplemented");
   }
   void visitBeginAccessInst(BeginAccessInst *i);
@@ -5414,6 +5518,12 @@ void IRGenSILFunction::visitRetainValueAddrInst(swift::RetainValueAddrInst *i) {
 }
 
 void IRGenSILFunction::visitCopyValueInst(swift::CopyValueInst *i) {
+  // TinySwift: forward operand (bitwise copy for value types, no ARC).
+  if (IGM.getSILModule().getOptions().TinySwift) {
+    Explosion in = getLoweredExplosion(i->getOperand());
+    setLoweredExplosion(i, in);
+    return;
+  }
   Explosion in = getLoweredExplosion(i->getOperand());
   Explosion out;
   cast<LoadableTypeInfo>(getTypeInfo(i->getOperand()->getType()))
@@ -5501,6 +5611,11 @@ void IRGenSILFunction::visitReleaseValueAddrInst(
 }
 
 void IRGenSILFunction::visitDestroyValueInst(swift::DestroyValueInst *i) {
+  // TinySwift: no-op — claim and discard the explosion.
+  if (IGM.getSILModule().getOptions().TinySwift) {
+    (void)getLoweredExplosion(i->getOperand()).claimAll();
+    return;
+  }
   auto operand = i->getOperand();
   auto ty = operand->getType();
   Explosion in = getLoweredExplosion(operand);

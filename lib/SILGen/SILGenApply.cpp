@@ -661,6 +661,7 @@ public:
       return ManagedValue::forObjectRValueWithoutOwnership(ref);
     }
     case Kind::ClassMethod: {
+#ifndef TINYSWIFT
       auto methodTy = SGF.SGM.Types.getConstantOverrideType(
           SGF.getTypeExpansionContext(), *constant);
 
@@ -678,8 +679,12 @@ public:
       }
       S.pop();
       return ManagedValue::forObjectRValueWithoutOwnership(methodVal);
+#else
+      llvm_unreachable("ClassMethod dispatch not supported in TinySwift");
+#endif
     }
     case Kind::SuperMethod: {
+#ifndef TINYSWIFT
       ArgumentScope S(SGF, Loc);
       ManagedValue castValue = borrowedCastToOriginalSelfType(
         SGF, Loc, *borrowedSelf);
@@ -698,6 +703,9 @@ public:
       }
       S.pop();
       return fn;
+#else
+      llvm_unreachable("SuperMethod dispatch not supported in TinySwift");
+#endif
     }
     case Kind::WitnessMethod: {
       if (auto func = constant->getFuncDecl()) {
@@ -731,6 +739,7 @@ public:
       return ManagedValue::forObjectRValueWithoutOwnership(fn);
     }
     case Kind::DynamicMethod: {
+#ifndef TINYSWIFT
       auto closureType = getDynamicMethodLoweredType(
           SGF.SGM.M, *constant, getSubstFormalType());
 
@@ -740,6 +749,9 @@ public:
           closureType);
       S.pop();
       return ManagedValue::forObjectRValueWithoutOwnership(fn);
+#else
+      llvm_unreachable("DynamicMethod dispatch not supported in TinySwift");
+#endif
     }
     }
     llvm_unreachable("unhandled kind");
