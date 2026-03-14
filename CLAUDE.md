@@ -6,7 +6,7 @@ A value-type-only Swift compiler fork for embedded systems, based on `swiftlang/
 
 - **GitHub Project Board**: https://github.com/orgs/tinyswift/projects/1
 - **Issues**: 63 total across 6 phases — use `gh issue list --label phase-N` to filter by phase
-- Phase 0 (#1-12), Phase 1 (#13-18), Phase 2 (#19-33), and Phase 3 (#34-43) are complete; Phase 4-5 are open
+- Phase 0 (#1-12), Phase 1 (#13-18), Phase 2 (#19-33), Phase 3 (#34-43), Phase 4 (#44-53), and Phase 5 (#54-63) are complete
 
 ## Research Documents
 
@@ -35,6 +35,8 @@ All design research lives in `../research/` (sibling to this repo):
 - **Compile flags**: `TINYSWIFT_NO_CLASSES`, `TINYSWIFT_NO_OBJC`, `TINYSWIFT_NO_ARC`, `TINYSWIFT_NO_RUNTIME_METADATA`
 - **Phase 2 (ARC Removal)**: OSSA form preserved through IRGen, ARC passes guarded, MoveOnlyChecker extended to all non-trivial types, IRGen handles OSSA instructions directly
 - **Phase 3 (Metadata & Runtime Stripping)**: All metadata emission guarded (GenMeta, GenReflection, GenProto, GenExistential, GenDecl, GenValueWitness), Builtins.swift stdlib, Runtime.c, mandatory generic specialization, zero `__swift5_*` sections
+- **Phase 4 (Embedded Target Bringup)**: tinyswiftc driver, ARM64/RISC-V/Wasm targets, CI with QEMU and wasmtime, binary size budgets
+- **Phase 5 (Polish & Release)**: Documentation (GettingStarted, LanguageGuide, EmbeddedCDevelopers), stress tests, cross-target test matrix, example projects, release packaging pipeline, v0.1.0-alpha.1
 
 ## Key Files
 
@@ -67,6 +69,9 @@ All design research lives in `../research/` (sibling to this repo):
 - `stdlib/public/TinySwift/Builtins.swift` — TinySwift standard library (all primitive types, protocols, pointers)
 - `stdlib/public/TinySwift/Runtime.c` — minimal C runtime (trap, memcpy, memset, alloc stubs, stack canary)
 - `stdlib/public/TinySwift/CMakeLists.txt` — builds builtins module and runtime
+- `scripts/run-cross-target-tests.sh` — cross-target test runner (ARM64, RISC-V, Wasm)
+- `scripts/package-toolchain.sh` — release tarball packaging
+- `.github/workflows/release.yml` — release pipeline triggered by v* tags
 
 ## Build
 
@@ -80,7 +85,7 @@ cmake --build --preset tinyswift-debug
 
 ## Tests
 
-All tests are in `test/TinySwift/` with subdirectories: `smoke/`, `reject/`, `valid/`, `ported/`, `ownership/`, `metadata/`.
+All tests are in `test/TinySwift/` with subdirectories: `smoke/`, `reject/`, `valid/`, `ported/`, `ownership/`, `metadata/`, `embedded/`, `stress/`.
 
 Tests run with `-parse-stdlib` (no stdlib built), so only `Builtin.*` types are available. All test RUN lines must include:
 ```
@@ -98,8 +103,8 @@ Reject tests additionally need `-verify` and `// expected-error` annotations.
 | 1 | Language Subsetting (Sema rejections) | #13-18 | Done |
 | 2 | ARC Removal & Ownership | #19-33 | Done |
 | 3 | Metadata & Runtime Stripping | #34-43 | Done |
-| 4 | Embedded Target Bringup | #44-53 | See `07_build_system_plan.md` |
-| 5 | Polish & Release | #54-63 | See `09_implementation_plan.md` §3.6 |
+| 4 | Embedded Target Bringup | #44-53 | Done |
+| 5 | Polish & Release | #54-63 | Done |
 
 ## Conventions
 
