@@ -852,6 +852,7 @@ void Serializer::writeBlockInfoBlock() {
   BLOCK_RECORD(options_block, IS_STATIC_LIBRARY);
   BLOCK_RECORD(options_block, HAS_HERMETIC_SEAL_AT_LINK);
   BLOCK_RECORD(options_block, IS_EMBEDDED_SWIFT_MODULE);
+  BLOCK_RECORD(options_block, IS_TINYSWIFT_MODULE);
   BLOCK_RECORD(options_block, IS_TESTABLE);
   BLOCK_RECORD(options_block, RESILIENCE_STRATEGY);
   BLOCK_RECORD(options_block, ARE_PRIVATE_IMPORTS_ENABLED);
@@ -1081,6 +1082,11 @@ void Serializer::writeHeader() {
       if (Options.EmbeddedSwiftModule) {
         options_block::IsEmbeddedSwiftModuleLayout IsEmbeddedSwiftModule(Out);
         IsEmbeddedSwiftModule.emit(ScratchRecord);
+      }
+
+      if (M->getASTContext().LangOpts.hasFeature(Feature::TinySwift)) {
+        options_block::IsTinySwiftModuleLayout IsTinySwiftModule(Out);
+        IsTinySwiftModule.emit(ScratchRecord);
       }
 
       if (M->isTestingEnabled()) {

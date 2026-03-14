@@ -169,6 +169,9 @@ static bool readOptionsBlock(llvm::BitstreamCursor &cursor,
     case options_block::IS_EMBEDDED_SWIFT_MODULE:
       extendedInfo.setIsEmbeddedSwiftModule(true);
       break;
+    case options_block::IS_TINYSWIFT_MODULE:
+      extendedInfo.setIsTinySwiftModule(true);
+      break;
     case options_block::IS_TESTABLE:
       extendedInfo.setIsTestable(true);
       break;

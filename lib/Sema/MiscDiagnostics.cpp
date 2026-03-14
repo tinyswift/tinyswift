@@ -109,6 +109,26 @@ static void diagSyntacticUseRestrictions(const Expr *E, const DeclContext *DC,
           Ctx.Diags.diagnose(E->getLoc(),
                              diag::dynamic_cast_not_supported_in_tinyswift);
         }
+        // Reject try? and try! — use typed throws instead.
+        if (isa<OptionalTryExpr>(E) || isa<ForceTryExpr>(E)) {
+          Ctx.Diags.diagnose(E->getLoc(),
+                             diag::optional_try_not_supported_in_tinyswift);
+        }
+        // Reject 'is' operator — requires runtime metadata.
+        if (isa<IsExpr>(E)) {
+          Ctx.Diags.diagnose(E->getLoc(),
+                             diag::is_operator_not_supported_in_tinyswift);
+        }
+        // Reject 'super' — no class inheritance.
+        if (isa<SuperRefExpr>(E)) {
+          Ctx.Diags.diagnose(E->getLoc(),
+                             diag::super_not_supported_in_tinyswift);
+        }
+        // Reject #selector — requires ObjC runtime.
+        if (isa<ObjCSelectorExpr>(E)) {
+          Ctx.Diags.diagnose(E->getLoc(),
+                             diag::selector_not_supported_in_tinyswift);
+        }
       }
 
       // See through implicit conversions of the expression.  We want to be able

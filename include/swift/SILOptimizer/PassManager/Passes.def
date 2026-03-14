@@ -492,6 +492,8 @@ PASS(ConsumeOperatorCopyableAddressesChecker, "sil-consume-operator-copyable-add
      "Pass that performs consume operator checking for copyable addresses")
 PASS(DebugInfoCanonicalizer, "sil-onone-debuginfo-canonicalizer",
      "Canonicalize debug info at -Onone by propagating debug info into coroutine funclets")
+PASS(TinySwiftOwnershipLowering, "tinyswift-ownership-lowering",
+     "TinySwift Ownership Lowering Without ARC")
 PASS(TinySwiftVerifier, "tinyswift-verifier",
      "Verify No ARC Instructions in TinySwift Mode")
 PASS(TinySwiftGenericSpecializationVerifier, "tinyswift-generic-specialization-verifier",

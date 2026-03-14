@@ -4039,6 +4039,14 @@ NeverNullType TypeResolver::resolveASTFunctionType(
     } else {
       representation = *parsedRep;
 
+      // TinySwift: reject @convention(block).
+      if (getASTContext().LangOpts.hasFeature(Feature::TinySwift) &&
+          representation == FunctionType::Representation::Block) {
+        diagnoseInvalid(repr, conventionAttr->getAtLoc(),
+                        diag::convention_block_not_supported_in_tinyswift);
+        representation = FunctionType::Representation::Swift;
+      }
+
       parsedClangFunctionType = tryParseClangType(
           conventionAttr, shouldStoreClangType(representation));
 
@@ -5327,6 +5335,13 @@ NeverNullType TypeResolver::resolveImplicitlyUnwrappedOptionalType(
     ImplicitlyUnwrappedOptionalTypeRepr *repr, TypeResolutionOptions options,
     bool isDirect) {
   ASTContext &ctx = getASTContext();
+
+  // TinySwift: reject implicitly unwrapped optionals.
+  if (ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnose(repr->getLoc(), diag::iuo_not_supported_in_tinyswift);
+    return ErrorType::get(ctx);
+  }
+
   TypeResolutionFlags allowIUO = TypeResolutionFlags::SILType;
 
   bool doDiag = false;
@@ -5914,6 +5929,11 @@ TypeResolver::resolveExistentialType(ExistentialTypeRepr *repr,
 
 NeverNullType TypeResolver::resolveMetatypeType(MetatypeTypeRepr *repr,
                                                 TypeResolutionOptions options) {
+  // TinySwift: reject .Type / .Protocol metatypes — requires runtime metadata.
+  if (getASTContext().LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnose(repr->getLoc(), diag::metatype_not_supported_in_tinyswift);
+    return ErrorType::get(getASTContext());
+  }
   // The instance type of a metatype is always abstract, not SIL-lowered.
   if (options.is(TypeResolverContext::ExistentialConstraint))
     options |= TypeResolutionFlags::DisallowOpaqueTypes;

@@ -191,6 +191,67 @@ void *memset(void *dest, int value, tinyswift_size_t n) {
  * The Swift compiler emits calls to these from Builtin.allocRaw and
  * Builtin.deallocRaw (via UnsafeMutablePointer.allocate / .deallocate).
  */
+/*
+ * Bump allocator (optional).
+ *
+ * When TINYSWIFT_ENABLE_BUMP_ALLOC is defined, a simple bump-forward
+ * allocator is provided using a static buffer. Deallocation is a no-op.
+ * This is suitable for short-lived embedded programs where memory is
+ * never reclaimed.
+ *
+ * Configure the buffer size with TINYSWIFT_HEAP_SIZE (default: 4096).
+ */
+#ifdef TINYSWIFT_ENABLE_BUMP_ALLOC
+
+#ifndef TINYSWIFT_HEAP_SIZE
+#define TINYSWIFT_HEAP_SIZE 4096
+#endif
+
+static unsigned char _tinyswift_heap[TINYSWIFT_HEAP_SIZE]
+    __attribute__((aligned(16)));
+static tinyswift_size_t _tinyswift_heap_offset = 0;
+
+TINYSWIFT_EXPORT
+void *_tinyswift_alloc(tinyswift_size_t size, tinyswift_size_t alignment) {
+    /* Align the current offset. */
+    tinyswift_size_t mask = alignment - 1;
+    tinyswift_size_t aligned = (_tinyswift_heap_offset + mask) & ~mask;
+
+    if (aligned + size > TINYSWIFT_HEAP_SIZE) {
+        /* Out of memory. Trap. */
+        _tinyswift_trap();
+        return (void *)0;
+    }
+
+    void *ptr = &_tinyswift_heap[aligned];
+    _tinyswift_heap_offset = aligned + size;
+
+#ifndef NDEBUG
+    /* Debug: fill allocated memory with 0xCD pattern. */
+    _tinyswift_memset(ptr, 0xCD, size);
+#endif
+
+    return ptr;
+}
+
+TINYSWIFT_EXPORT
+void _tinyswift_dealloc(void *ptr, tinyswift_size_t size,
+                         tinyswift_size_t alignment) {
+    /* Bump allocator: deallocation is a no-op. */
+    (void)alignment;
+#ifndef NDEBUG
+    /* Debug: poison freed memory with 0xDE pattern. */
+    if (ptr && size > 0) {
+        _tinyswift_memset(ptr, 0xDE, size);
+    }
+#else
+    (void)ptr;
+    (void)size;
+#endif
+}
+
+#else /* !TINYSWIFT_ENABLE_BUMP_ALLOC */
+
 TINYSWIFT_EXPORT
 TINYSWIFT_WEAK
 void *_tinyswift_alloc(tinyswift_size_t size, tinyswift_size_t alignment) {
@@ -216,6 +277,8 @@ void _tinyswift_dealloc(void *ptr, tinyswift_size_t size,
     (void)alignment;
     _tinyswift_trap();
 }
+
+#endif /* TINYSWIFT_ENABLE_BUMP_ALLOC */
 
 /* ========================================================================== */
 /*  5. Stack canary support                                                   */

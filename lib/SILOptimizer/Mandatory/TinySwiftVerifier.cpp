@@ -79,6 +79,17 @@ class TinySwiftVerifier : public SILFunctionTransform {
     case SILInstructionKind::SuperMethodInst:
     case SILInstructionKind::ObjCMethodInst:
     case SILInstructionKind::ObjCSuperMethodInst:
+    // Existential instructions — no existential containers in TinySwift.
+    case SILInstructionKind::InitExistentialAddrInst:
+    case SILInstructionKind::OpenExistentialAddrInst:
+    case SILInstructionKind::InitExistentialRefInst:
+    case SILInstructionKind::OpenExistentialRefInst:
+    case SILInstructionKind::InitExistentialMetatypeInst:
+    case SILInstructionKind::OpenExistentialMetatypeInst:
+    case SILInstructionKind::AllocExistentialBoxInst:
+    case SILInstructionKind::OpenExistentialBoxInst:
+    case SILInstructionKind::ProjectExistentialBoxInst:
+    case SILInstructionKind::DeallocExistentialBoxInst:
       return true;
     default:
       return false;

@@ -2143,6 +2143,30 @@ ERROR(unowned_not_supported_in_tinyswift, none,
       "unowned references are not supported in TinySwift", ())
 ERROR(import_not_supported_in_tinyswift, none,
       "module '%0' cannot be imported in TinySwift", (StringRef))
+ERROR(optional_try_not_supported_in_tinyswift, none,
+      "'try?' and 'try!' are not supported in TinySwift; use typed throws", ())
+ERROR(is_operator_not_supported_in_tinyswift, none,
+      "'is' operator is not supported in TinySwift; it requires runtime metadata", ())
+ERROR(super_not_supported_in_tinyswift, none,
+      "'super' is not supported in TinySwift; no class inheritance", ())
+ERROR(selector_not_supported_in_tinyswift, none,
+      "'#selector' is not supported in TinySwift; it requires the ObjC runtime", ())
+ERROR(metatype_not_supported_in_tinyswift, none,
+      "'.Type' and '.Protocol' metatypes are not supported in TinySwift", ())
+ERROR(iuo_not_supported_in_tinyswift, none,
+      "implicitly unwrapped optionals are not supported in TinySwift", ())
+ERROR(rethrows_not_supported_in_tinyswift, none,
+      "'rethrows' is not supported in TinySwift; use typed throws", ())
+ERROR(convention_block_not_supported_in_tinyswift, none,
+      "'@convention(block)' is not supported in TinySwift", ())
+ERROR(sendable_attr_not_supported_in_tinyswift, none,
+      "'@Sendable' is not supported in TinySwift; no concurrency", ())
+ERROR(dynamic_callable_not_supported_in_tinyswift, none,
+      "'@dynamicCallable' is not supported in TinySwift", ())
+ERROR(dynamic_member_lookup_not_supported_in_tinyswift, none,
+      "'@dynamicMemberLookup' is not supported in TinySwift", ())
+ERROR(global_actor_not_supported_in_tinyswift, none,
+      "'@globalActor' is not supported in TinySwift; no concurrency", ())
 
 ERROR(access_control_in_protocol,none,
       "%0 modifier cannot be used in protocols", (DeclAttribute))

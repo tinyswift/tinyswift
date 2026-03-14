@@ -251,11 +251,24 @@ class MoveOnlyCheckerPass : public SILFunctionTransform {
       for (auto *arg : bb.getArguments()) {
         if (arg->getType().isTrivial(*fn))
           continue;
-        // Only inject markers for types that are already move-only.
-        // Generic params and closures are non-trivial but not move-only;
-        // they are handled by OSSA and the TinySwift verifier instead.
-        if (!arg->getType().isMoveOnly())
-          continue;
+        // In TinySwift, extend move-only enforcement to all non-trivial
+        // types that have a deinit or contain non-trivial fields, not just
+        // explicit ~Copyable types. This ensures deterministic destruction.
+        // However, still skip generic type params and function types, which
+        // are handled by OSSA preservation and the TinySwift verifier.
+        if (!arg->getType().isMoveOnly()) {
+          // Check if the type has a nominal with a deinit, or is a struct/enum
+          // containing non-trivial fields. Skip function types and archetypes.
+          auto canTy = arg->getType().getASTType();
+          if (canTy->is<ArchetypeType>() || canTy->is<SILFunctionType>())
+            continue;
+          auto *nominal = canTy->getAnyNominal();
+          if (!nominal)
+            continue;
+          // Only extend to types with explicit deinits.
+          if (!nominal->getValueTypeDestructor())
+            continue;
+        }
         // Check if already marked.
         bool alreadyMarked = false;
         for (auto *use : arg->getUses()) {

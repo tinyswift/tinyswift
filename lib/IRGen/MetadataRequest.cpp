@@ -2928,6 +2928,11 @@ irgen::createTypeMetadataAccessFunction(IRGenModule &IGM, CanType type,
 llvm::Function *
 irgen::createDirectTypeMetadataAccessFunction(IRGenModule &IGM, CanType type,
                                               bool allowExistingDefinition) {
+  // TinySwift: metadata access functions should never be created.
+  if (IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("TinySwift: createDirectTypeMetadataAccessFunction "
+                     "should never be called");
+
   return createTypeMetadataAccessFunction(IGM, type, CacheStrategy::Lazy,
                                           [&](IRGenFunction &IGF,
                                               DynamicMetadataRequest request,

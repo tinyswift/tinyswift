@@ -1687,6 +1687,8 @@ static bool ParseLangArgs(LangOptions &Opts, ArgList &Args,
   if (Opts.hasFeature(Feature::TinySwift)) {
     if (!Opts.hasFeature(Feature::Embedded))
       Opts.enableFeature(Feature::Embedded);
+    // Make #if tinyswift available as a compilation condition.
+    Opts.addCustomConditionalCompilationFlag("tinyswift");
   }
 
   if (Opts.hasFeature(Feature::Embedded)) {

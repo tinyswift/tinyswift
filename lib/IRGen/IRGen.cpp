@@ -17,6 +17,7 @@
 #include "../Serialization/ModuleFormat.h"
 #include "GenValueWitness.h"
 #include "IRGenModule.h"
+#include "swift/IRGen/NoMetadataVerifier.h"
 #include "swift/ABI/MetadataValues.h"
 #include "swift/ABI/ObjectFile.h"
 #include "swift/AST/DiagnosticsIRGen.h"
@@ -1317,6 +1318,11 @@ GeneratedModule IRGenRequest::evaluate(Evaluator &evaluator,
       return GeneratedModule::null();
 
     setModuleFlags(IGM);
+
+    // TinySwift: verify no metadata sections exist after IRGen.
+    if (IGM.getSILModule().getOptions().TinySwift) {
+      irgen::NoMetadataVerifier::verifyAndTrap(*IGM.getModule());
+    }
   }
 
   // Bail out if there are any errors.

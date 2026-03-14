@@ -1039,6 +1039,10 @@ void irgen::emitPartialClassDeallocation(IRGenFunction &IGF,
 
 /// emitClassDecl - Emit all the declarations associated with this class type.
 void IRGenModule::emitClassDecl(ClassDecl *D) {
+  // TinySwift: classes should never reach IRGen.
+  if (getSILModule().getOptions().TinySwift)
+    llvm_unreachable("TinySwift: emitClassDecl should never be called");
+
   PrettyStackTraceDecl prettyStackTrace("emitting class metadata for", D);
 
   SILType selfType = getSelfType(D);

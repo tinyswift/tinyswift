@@ -54,5 +54,6 @@ target_sources(swiftSILOptimizer PRIVATE
   RegionAnalysisInvalidationTransform.cpp
   DiagnosticDeadFunctionElimination.cpp
   OwnershipModelEliminator.cpp
+  TinySwiftOwnershipLowering.cpp
   TinySwiftVerifier.cpp
   TinySwiftGenericSpecializationVerifier.cpp)

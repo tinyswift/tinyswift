@@ -285,6 +285,7 @@ SILPassPipelinePlan::getSILGenPassPipeline(const SILOptions &Options) {
   // TinySwift: verify no ARC/class instructions after SILGen cleanup.
   if (P.getOptions().TinySwift) {
     P.addTinySwiftVerifier();
+    P.addTinySwiftOwnershipLowering();
   }
 
   if (P.getOptions().EnableLifetimeDependenceDiagnostics) {

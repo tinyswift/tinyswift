@@ -65,6 +65,11 @@ MetadataResponse
 irgen::emitArchetypeTypeMetadataRef(IRGenFunction &IGF,
                                     CanArchetypeType archetype,
                                     DynamicMetadataRequest request) {
+  // TinySwift: archetype metadata should never be needed.
+  if (IGF.IGM.getSILModule().getOptions().TinySwift)
+    llvm_unreachable("TinySwift: emitArchetypeTypeMetadataRef "
+                     "should never be called");
+
   assert(!isa<PackArchetypeType>(archetype));
 
   // Check for an existing cache entry.

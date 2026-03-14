@@ -1959,6 +1959,12 @@ static bool hasValidDynamicCallableMethod(NominalTypeDecl *decl,
 
 void AttributeChecker::
 visitDynamicCallableAttr(DynamicCallableAttr *attr) {
+  // TinySwift: reject @dynamicCallable — requires dynamic dispatch.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr,
+                          diag::dynamic_callable_not_supported_in_tinyswift);
+    return;
+  }
   // This attribute is only allowed on nominal types.
   auto decl = cast<NominalTypeDecl>(D);
   auto type = decl->getDeclaredType();
@@ -2081,6 +2087,12 @@ bool swift::isValidKeyPathDynamicMemberLookup(SubscriptDecl *decl,
 /// We just manually check the requirements here.
 void AttributeChecker::
 visitDynamicMemberLookupAttr(DynamicMemberLookupAttr *attr) {
+  // TinySwift: reject @dynamicMemberLookup — requires dynamic dispatch.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(
+        attr, diag::dynamic_member_lookup_not_supported_in_tinyswift);
+    return;
+  }
   // This attribute is only allowed on nominal types.
   auto decl = cast<NominalTypeDecl>(D);
   auto type = decl->getDeclaredType();
@@ -3234,6 +3246,11 @@ void AttributeChecker::visitRequiredAttr(RequiredAttr *attr) {
 }
 
 void AttributeChecker::visitRethrowsAttr(RethrowsAttr *attr) {
+  // TinySwift: reject rethrows — use typed throws instead.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::rethrows_not_supported_in_tinyswift);
+    return;
+  }
   // Make sure the function takes a 'throws' function argument or a
   // conformance to a '@rethrows' protocol.
   auto fn = dyn_cast<AbstractFunctionDecl>(D);
@@ -7203,6 +7220,11 @@ void AttributeChecker::visitKnownToBeLocalAttr(KnownToBeLocalAttr *attr) {
 }
 
 void AttributeChecker::visitSendableAttr(SendableAttr *attr) {
+  // TinySwift: reject @Sendable — no concurrency.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr, diag::sendable_attr_not_supported_in_tinyswift);
+    return;
+  }
   if ((isa<AbstractFunctionDecl>(D) || isa<AbstractStorageDecl>(D)) &&
       !isAsyncDecl(cast<ValueDecl>(D))) {
     auto value = cast<ValueDecl>(D);
@@ -7401,6 +7423,12 @@ void AttributeChecker::visitIsolatedAttr(IsolatedAttr *attr) {
 }
 
 void AttributeChecker::visitGlobalActorAttr(GlobalActorAttr *attr) {
+  // TinySwift: reject @globalActor — no concurrency.
+  if (Ctx.LangOpts.hasFeature(Feature::TinySwift)) {
+    diagnoseAndRemoveAttr(attr,
+                          diag::global_actor_not_supported_in_tinyswift);
+    return;
+  }
   auto nominal = dyn_cast<NominalTypeDecl>(D);
   if (!nominal)
     return; // already diagnosed

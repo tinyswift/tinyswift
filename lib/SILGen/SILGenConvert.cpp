@@ -592,6 +592,10 @@ public:
     auto concreteLoweredType =
         SGF.getLoweredType(AbstractionPattern::getOpaque(), concreteFormalType);
     
+    // TinySwift: existential containers should never be created.
+    if (SGF.getASTContext().LangOpts.hasFeature(Feature::TinySwift))
+      llvm_unreachable("TinySwift: existential container should never be created");
+
     switch (repr) {
     case ExistentialRepresentation::Opaque: {
       concreteBuffer = SGF.B.createInitExistentialAddr(loc, existential,

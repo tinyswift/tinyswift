@@ -58,7 +58,8 @@ enum OutputMode {
   EmitIR,
   EmitSIL,
   EmitAssembly,
-  EmitLibrary
+  EmitLibrary,
+  EmitBitcode
 };
 
 static cl::opt<OutputMode> OutputModeFlag(
@@ -70,7 +71,8 @@ static cl::opt<OutputMode> OutputModeFlag(
         clEnumValN(EmitIR, "emit-ir", "Emit LLVM IR"),
         clEnumValN(EmitSIL, "emit-sil", "Emit Swift Intermediate Language"),
         clEnumValN(EmitAssembly, "emit-assembly", "Emit assembly"),
-        clEnumValN(EmitLibrary, "emit-library", "Emit a shared library")),
+        clEnumValN(EmitLibrary, "emit-library", "Emit a shared library"),
+        clEnumValN(EmitBitcode, "emit-bc", "Emit LLVM bitcode")),
     cl::init(EmitExecutable), cl::cat(TinySwiftCategory));
 
 // Optimization level
@@ -149,6 +151,11 @@ static cl::opt<bool>
 static cl::opt<bool>
     PrintSysroot("print-sysroot",
                  cl::desc("Print resolved sysroot path and exit"),
+                 cl::cat(TinySwiftCategory));
+
+static cl::opt<bool>
+    PrintVersion("version",
+                 cl::desc("Print version and exit"),
                  cl::cat(TinySwiftCategory));
 
 //===----------------------------------------------------------------------===//
@@ -313,6 +320,9 @@ static std::string getDefaultOutputFile(StringRef InputFile,
   case EmitLibrary:
     sys::path::replace_extension(Result, "a");
     break;
+  case EmitBitcode:
+    sys::path::replace_extension(Result, "bc");
+    break;
   }
   return std::string(Result);
 }
@@ -333,6 +343,12 @@ int main(int argc, char **argv) {
   std::string Frontend = findSwiftFrontend(argv[0]);
   if (Frontend.empty())
     return 1;
+
+  // Handle version query
+  if (PrintVersion) {
+    outs() << "tinyswiftc v0.1.0-alpha.1\n";
+    return 0;
+  }
 
   // Handle info queries
   if (PrintTargetInfo) {
@@ -459,6 +475,11 @@ int main(int argc, char **argv) {
     break;
   case EmitAssembly:
     FrontendArgs.push_back("-emit-assembly");
+    FrontendArgs.push_back("-o");
+    FrontendArgs.push_back(OutFile);
+    break;
+  case EmitBitcode:
+    FrontendArgs.push_back("-emit-bc");
     FrontendArgs.push_back("-o");
     FrontendArgs.push_back(OutFile);
     break;

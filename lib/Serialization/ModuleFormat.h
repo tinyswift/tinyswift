@@ -951,6 +951,7 @@ namespace options_block {
     IS_STATIC_LIBRARY,
     HAS_HERMETIC_SEAL_AT_LINK,
     IS_EMBEDDED_SWIFT_MODULE,
+    IS_TINYSWIFT_MODULE,
     IS_TESTABLE,
     RESILIENCE_STRATEGY,
     ARE_PRIVATE_IMPORTS_ENABLED,
@@ -1001,6 +1002,10 @@ namespace options_block {
 
   using IsEmbeddedSwiftModuleLayout = BCRecordLayout<
     IS_EMBEDDED_SWIFT_MODULE
+  >;
+
+  using IsTinySwiftModuleLayout = BCRecordLayout<
+    IS_TINYSWIFT_MODULE
   >;
 
   using IsTestableLayout = BCRecordLayout<

@@ -14,6 +14,7 @@ SWIFT_FRONTEND="${SWIFT_FRONTEND:-build/tinyswift-debug/bin/swift-frontend}"
 TARGETS=(
   aarch64-none-elf
   riscv32-none-none-eabi
+  riscv64-none-none-eabi
   wasm32-unknown-wasi
 )
 
